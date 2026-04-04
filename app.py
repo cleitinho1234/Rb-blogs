@@ -3,14 +3,14 @@ import os
 
 app = Flask(__name__)
 
-# Pasta para salvar os vídeos que seu primo enviar
+# Configura a pasta de uploads dentro de static
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Lista simples para guardar as postagens (na memória por enquanto)
+# Lista para guardar as postagens temporariamente
 postagens = []
 
 @app.route('/')
@@ -24,10 +24,17 @@ def postar():
         video = request.files.get('video')
         
         if video:
-            video_path = os.path.join(app.config['UPLOAD_FOLDER'], video.filename)
+            video_filename = video.filename
+            video_path = os.path.join(app.config['UPLOAD_FOLDER'], video_filename)
             video.save(video_path)
-            # Salva o caminho do vídeo e a descrição
-            postagens.insert(0, {'video': video.filename, 'desc': descricao})
+            
+            # Adiciona a nova postagem no topo da lista
+            nova_postagem = {
+                'video': video_filename,
+                'desc': descricao,
+                'data': "Postado agora"
+            }
+            postagens.insert(0, nova_postagem)
             return redirect(url_for('index'))
             
     return render_template('postar.html')
