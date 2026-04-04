@@ -7,45 +7,83 @@
     <style>
         body { font-family: Arial, sans-serif; background-color: #f9f9f9; color: #000; padding: 20px; }
         header { border-bottom: 4px solid #24292e; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        /* Barra de usuário */
+        .user-bar { 
+            background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 20px; 
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .user-bar a { text-decoration: none; color: #007bff; font-weight: bold; }
+
         .btn-postar { 
             display: inline-block; background: #28a745; color: white; padding: 15px 25px; 
             text-decoration: none; font-weight: bold; border-radius: 8px; margin-bottom: 20px;
         }
+        
         article { background: white; border: 2px solid #ddd; padding: 20px; margin-bottom: 30px; border-radius: 10px; position: relative; }
         video { width: 100%; max-width: 600px; border: 1px solid #000; margin: 10px 0; }
+        
         .btn-excluir {
             background-color: #dc3545; color: white; border: none; padding: 10px 20px;
             text-decoration: none; font-weight: bold; border-radius: 5px; cursor: pointer; display: inline-block; margin-top: 10px;
         }
+
+        .auth-links a { margin-right: 15px; background: #24292e; color: white; padding: 8px 15px; border-radius: 5px; }
     </style>
 </head>
 <body>
 
     <header role="banner">
         <h1>Diário de Bordo - Acessível</h1>
-        <a href="/postar" class="btn-postar" aria-label="Criar nova postagem">➕ CRIAR NOVA POSTAGEM</a>
+
+        <div class="user-bar" role="navigation">
+            {% if user %}
+                <span>Logado como: <strong>{{ user }}</strong></span>
+                <a href="/logout" aria-label="Sair da conta">Sair</a>
+            {% else %}
+                <div class="auth-links">
+                    <a href="/login">Entrar</a>
+                    <a href="/cadastro">Criar Conta</a>
+                </div>
+            {% endif %}
+        </div>
+
+        {% if e_admin %}
+            <a href="/postar" class="btn-postar" aria-label="Criar nova postagem">➕ CRIAR NOVA POSTAGEM</a>
+        {% endif %}
     </header>
 
     <main role="main">
+        {% if not posts %}
+            <p>Ainda não há postagens no blog.</p>
+        {% endif %}
+
         {% for post in posts %}
         <article>
             <p><strong>Data: {{ post.data }}</strong></p>
             
             <video controls aria-label="Vídeo: {{ post.desc }}">
                 <source src="{{ url_for('static', filename='uploads/' + post.video) }}" type="video/mp4">
+                Seu navegador não suporta vídeos.
             </video>
 
             <p><strong>Descrição:</strong> {{ post.desc }}</p>
 
-            <a href="{{ url_for('deletar', id_video=post.id) }}" 
-               class="btn-excluir" 
-               onclick="return confirm('Tem certeza que quer apagar esse vídeo?')"
-               aria-label="Excluir postagem com a descrição: {{ post.desc }}">
-               🗑️ EXCLUIR VÍDEO
-            </a>
+            {% if e_admin %}
+                <a href="{{ url_for('deletar', id_video=post.id) }}" 
+                   class="btn-excluir" 
+                   onclick="return confirm('Tem certeza que quer apagar esse vídeo?')"
+                   aria-label="Excluir postagem com a descrição: {{ post.desc }}">
+                   🗑️ EXCLUIR VÍDEO
+                </a>
+            {% endif %}
         </article>
         {% endfor %}
     </main>
+
+    <footer>
+        <p>&copy; 2026 - Blog Acessível para TalkBack</p>
+    </footer>
 
 </body>
 </html>
