@@ -4,14 +4,14 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import json
-import requests  # Adicionado para falar com o Google
+import requests  # Necessário para a ponte com o Google
 
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
 
-# --- CONFIGURAÇÃO DA IA (ESCONDIDA) ---
-# A chave fica aqui no servidor, protegida dos robôs do Google
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAZfXVKTROOsNqX1QYPcdLlrNBbaB1xW9s")
+# --- CONFIGURAÇÃO DA IA (SEGURA) ---
+# O sistema busca a chave que você colocou no painel 'Environment' do Render
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Configurações de Pastas
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
@@ -37,7 +37,6 @@ def salvar_dados(arquivo, dados):
     with open(arquivo, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
-# Carrega tudo ao iniciar o site
 postagens = carregar_dados(POSTS_FILE)
 usuarios = carregar_dados(USERS_FILE)
 
@@ -59,7 +58,7 @@ def index():
     e_admin = user_email in ADMINS
     return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=e_admin)
 
-# --- ROTA DA IA (NOVA FUNÇÃO) ---
+# --- ROTA DA IA (ESCONDE A CHAVE DO NAVEGADOR) ---
 @app.route('/comunicar_ia', methods=['POST'])
 def comunicar_ia():
     if not session.get('user'):
@@ -68,6 +67,7 @@ def comunicar_ia():
     dados = request.get_json()
     pergunta = dados.get('pergunta')
     
+    # Usa a chave salva no Render para falar com o Google
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     
     try:
