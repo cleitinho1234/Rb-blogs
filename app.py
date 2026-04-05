@@ -58,25 +58,33 @@ def index():
     e_admin = user_email in ADMINS
     return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=e_admin)
 
-# --- ROTA DA IA (ESCONDE A CHAVE DO NAVEGADOR) ---
+# --- ROTA DA IA (CORRIGIDA) ---
 @app.route('/comunicar_ia', methods=['POST'])
 def comunicar_ia():
+    # Verifica se o usuário está logado
     if not session.get('user'):
         return jsonify({"error": "Login necessário"}), 401
     
     dados = request.get_json()
     pergunta = dados.get('pergunta')
+
+    if not GEMINI_API_KEY:
+        return jsonify({"error": "Configuração da chave API ausente no Render"}), 500
     
     # Usa a chave salva no Render para falar com o Google
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
     
     try:
+        # Faz a requisição para o Google com um tempo limite de 10 segundos
         response = requests.post(url, json={
             "contents": [{"parts": [{"text": pergunta}]}]
-        })
+        }, timeout=10)
+        
+        # Retorna a resposta do Google direto para o seu site
         return jsonify(response.json())
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        print(f"Erro na comunicação com a IA: {e}")
+        return jsonify({"error": "O servidor da IA demorou a responder ou falhou."}), 500
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
@@ -186,4 +194,6 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    # Ajuste para rodar corretamente no Render
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
