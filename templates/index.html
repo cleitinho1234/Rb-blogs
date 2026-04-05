@@ -7,39 +7,50 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 650px; padding: 15px; }
-        header { background: #24292e; color: white; padding: 20px; text-align: center; width: 100%; margin-bottom: 20px; }
-        .card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .profile-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 20px; text-align: center; }
-        .btn-azul { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
-        .btn-adm { display: block; background: #28a745; color: white; padding: 15px; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; }
-        .btn-sair { color: #d9534f; font-size: 1em; display: block; margin-top: 15px; font-weight: bold; text-decoration: none; border: 1px solid #d9534f; padding: 8px; border-radius: 8px; }
-        .input-nome { padding: 12px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 200px; margin-right: 5px; }
+        .main-container { width: 100%; max-width: 650px; padding: 15px; padding-bottom: 80px; } /* Espaço para o link fixo */
+        header { background: #24292e; color: white; padding: 25px; text-align: center; width: 100%; margin-bottom: 20px; }
         
-        /* Estilos de Interação */
-        .interacao { border-top: 1px solid #eee; margin-top: 10px; padding-top: 10px; display: flex; gap: 15px; }
-        .btn-interagir { background: none; border: none; color: #65676b; font-weight: bold; cursor: pointer; padding: 5px; }
-        .btn-interagir.curtido { color: #007bff; }
-        .comentarios-section { margin-top: 10px; background: #f9f9f9; padding: 10px; border-radius: 8px; font-size: 0.9em; }
-        .input-comentario { width: 100%; padding: 8px; border-radius: 20px; border: 1px solid #ddd; margin-top: 5px; outline: none; }
+        /* Estilo dos Cards */
+        .card { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .profile-card { background: white; padding: 30px; border-radius: 15px; border: 1px solid #ddd; margin-bottom: 25px; text-align: center; }
+        
+        /* Botões Maiores para Acessibilidade */
+        .btn-azul { background: #007bff; color: white; border: none; padding: 18px 30px; border-radius: 12px; font-weight: bold; font-size: 1.1em; cursor: pointer; text-decoration: none; display: inline-block; min-width: 44px; min-height: 44px; }
+        .btn-adm { display: block; background: #28a745; color: white; padding: 20px; text-align: center; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 1.2em; margin-bottom: 25px; }
+        
+        /* Interação (Curtir e Comentar) - Botões Grandes */
+        .interacao { border-top: 2px solid #f0f2f5; margin-top: 15px; padding-top: 15px; display: flex; justify-content: space-around; }
+        .btn-interagir { background: #f0f2f5; border: none; color: #444; font-weight: bold; cursor: pointer; padding: 15px; border-radius: 10px; flex: 1; margin: 0 5px; font-size: 1.1em; transition: 0.2s; }
+        .btn-interagir:hover { background: #e4e6e9; }
+        .btn-interagir.curtido { color: #007bff; background: #e7f3ff; }
+
+        /* Comentários */
+        .comentarios-section { margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 12px; }
+        .input-comentario { width: 100%; padding: 15px; border-radius: 25px; border: 2px solid #ddd; margin-top: 10px; font-size: 1em; outline: none; }
+
+        /* Link Flutuante do WhatsApp */
+        .link-contato { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; padding: 15px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000; font-size: 1em; display: flex; align-items: center; gap: 8px; }
+        .link-contato:hover { transform: scale(1.05); background: #128c7e; }
     </style>
 </head>
 <body>
+
     <header><h1>RB BLOGS</h1></header>
+
     <div class="main-container">
         
         {% if user %}
             <div class="profile-card">
-                <p>Olá, <strong>{{ user_info.nome }}</strong></p>
-                <form action="/salvar_nome" method="post" style="display: inline-block;">
-                    <input type="text" name="novo_nome" class="input-nome" placeholder="Novo nome..." required>
+                <p style="font-size: 1.2em;">Olá, <strong>{{ user_info.nome }}</strong></p>
+                <form action="/salvar_nome" method="post" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
+                    <input type="text" name="novo_nome" class="input-nome" placeholder="Novo nome..." required aria-label="Alterar seu nome">
                     <button type="submit" class="btn-azul">SALVAR NOME</button>
                 </form>
-                <a href="/logout" class="btn-sair">SAIR DA CONTA</a>
+                <a href="/logout" class="btn-sair" style="display: inline-block; margin-top: 20px; color: #d9534f; text-decoration: none; font-weight: bold;">SAIR DA CONTA</a>
             </div>
 
             {% if e_admin %}
-                <a href="/postar" class="btn-adm">+ NOVA POSTAGEM</a>
+                <a href="/postar" class="btn-adm" aria-label="Criar nova postagem">+ NOVA POSTAGEM</a>
             {% endif %}
         {% else %}
             <div class="profile-card">
@@ -51,57 +62,78 @@
 
         {% for post in posts %}
         <div class="card" id="post-{{ post.id }}">
-            <p><strong>{{ post.desc }}</strong></p>
+            <p style="font-size: 1.1em; line-height: 1.4;"><strong>{{ post.desc }}</strong></p>
             {% if post.arquivo %}
-                {% if post.tipo == 'video' %}<video controls playsinline style="width:100%; border-radius:8px;" src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
-                {% else %}<img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}" style="width:100%; border-radius:8px;">{% endif %}
+                {% if post.tipo == 'video' %}
+                    <video controls playsinline style="width:100%; border-radius:12px;" src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
+                {% else %}
+                    <img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}" alt="Imagem da postagem" style="width:100%; border-radius:12px;">
+                {% endif %}
             {% endif %}
 
             <div class="interacao">
-                <button class="btn-interagir {% if user in post.likes %}curtido{% endif %}" onclick="curtirPost('{{ post.id }}')">
-                    👍 <span id="total-likes-{{ post.id }}">{{ post.likes|length }}</span> Curtidas
+                <button class="btn-interagir {% if user in post.likes %}curtido{% endif %}" 
+                        onclick="curtirPost('{{ post.id }}')" 
+                        aria-label="Curtir postagem">
+                    👍 <span id="total-likes-{{ post.id }}">{{ post.likes|length }}</span>
                 </button>
-                <button class="btn-interagir" onclick="focarComentario('{{ post.id }}')">💬 Comentar</button>
+                <button class="btn-interagir" 
+                        onclick="focarComentario('{{ post.id }}')" 
+                        aria-label="Comentar na postagem">
+                    💬 Comentar
+                </button>
                 {% if e_admin %}
-                    <a href="/deletar/{{ post.id }}" style="color: red; text-decoration: none; font-size: 0.8em; margin-left: auto;">Excluir</a>
+                    <a href="/deletar/{{ post.id }}" style="color: #d9534f; text-decoration: none; padding: 10px;" onclick="return confirm('Deletar post?')">🗑️</a>
                 {% endif %}
             </div>
 
             <div class="comentarios-section">
                 <div id="lista-comentarios-{{ post.id }}">
                     {% for coment in post.comentarios %}
-                        <p><strong>{{ get_nome_atual(coment.autor_email) }}:</strong> {{ coment.texto }}</p>
+                        <div style="border-bottom: 1px solid #ddd; padding: 8px 0;">
+                            <p style="margin: 0;"><strong>{{ get_nome_atual(coment.autor_email) }}:</strong> {{ coment.texto }}</p>
+                        </div>
                     {% endfor %}
                 </div>
                 {% if user %}
-                    <input type="text" class="input-comentario" id="input-{{ post.id }}" placeholder="Escreva um comentário..." onkeypress="enviarComentario(event, '{{ post.id }}')">
+                    <input type="text" class="input-comentario" id="input-{{ post.id }}" 
+                           placeholder="Escreva um comentário e aperte Enter..." 
+                           onkeypress="enviarComentario(event, '{{ post.id }}')"
+                           aria-label="Escreva seu comentário">
                 {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
 
+    <a href="https://w.app/fp02po" target="_blank" class="link-contato" aria-label="Falar no WhatsApp para fazer seu blog">
+        📱 Venha fazer seu blog!
+    </a>
+
     <script>
-        // Função para Curtir sem recarregar a página
         async function curtirPost(postId) {
             const res = await fetch(`/curtir/${postId}`);
             const data = await res.json();
             if (data.novo_total !== undefined) {
                 document.getElementById(`total-likes-${postId}`).innerText = data.novo_total;
-                event.target.classList.toggle('curtido');
+                // Alterna a cor do botão visualmente
+                const btn = document.querySelector(`#post-${postId} .btn-interagir`);
+                btn.classList.toggle('curtido');
             }
         }
 
         function focarComentario(postId) {
             const input = document.getElementById(`input-${postId}`);
-            if (input) input.focus();
+            if (input) {
+                input.focus();
+                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
-        // Função para Comentar sem recarregar a página
         async function enviarComentario(event, postId) {
             if (event.key === 'Enter') {
-                const texto = event.target.value;
-                if (!texto.strip) {
+                const texto = event.target.value.trim();
+                if (texto !== "") {
                     const res = await fetch(`/comentar/${postId}`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -109,9 +141,11 @@
                     });
 
                     if (res.ok) {
-                        // Adiciona o comentário na tela na hora
                         const lista = document.getElementById(`lista-comentarios-${postId}`);
-                        lista.innerHTML += `<p><strong>Você:</strong> ${texto}</p>`;
+                        const novo = document.createElement('div');
+                        novo.style = "border-bottom: 1px solid #ddd; padding: 8px 0;";
+                        novo.innerHTML = `<p style="margin: 0;"><strong>Você:</strong> ${texto}</p>`;
+                        lista.appendChild(novo);
                         event.target.value = '';
                     }
                 }
