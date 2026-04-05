@@ -67,7 +67,6 @@ def postar():
             return redirect(url_for('index'))
     return render_template('postar.html')
 
-# NOVA LÓGICA DE CURTIR SEM RECARREGAR
 @app.route('/curtir/<id_video>')
 def curtir(id_video):
     user = session.get('user')
