@@ -3,27 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Postar no Blog</title>
+    <title>Postar - RB BLOGS</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; font-size: 18px; }
-        label { display: block; margin-top: 25px; font-weight: bold; }
-        input, textarea, button { width: 100%; padding: 15px; margin-top: 10px; border-radius: 8px; border: 2px solid #333; }
-        button { background-color: #007bff; color: white; font-weight: bold; cursor: pointer; }
+        body { font-family: sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 20px; border-radius: 15px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #24292e; }
+        input, textarea { width: 100%; margin: 10px 0; padding: 12px; border-radius: 8px; border: 1px solid #ddd; }
+        button { width: 100%; padding: 12px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .voltar { display: block; text-align: center; margin-top: 15px; color: #65676b; text-decoration: none; }
     </style>
 </head>
 <body>
-    <main role="main">
-        <h1>Criar Nova Postagem</h1>
-
+    <div class="card">
+        <h2>Nova Postagem</h2>
         <form action="/postar" method="post" enctype="multipart/form-data">
-            <label for="video">1. Escolher o vídeo do seu dia (Arquivo):</label>
-            <input type="file" id="video" name="video" accept="video/*" required aria-label="Selecione um arquivo de vídeo">
-
-            <label for="descricao">2. Descreva o vídeo para o seu público (Opcional):</label>
-            <textarea id="descricao" name="descricao" rows="4" placeholder="Ex: Hoje eu fui ao parque..."></textarea>
-
-            <button type="submit" aria-label="Clique aqui para publicar agora">PUBLICAR NO BLOG</button>
+            <textarea name="descricao" placeholder="O que você está pensando? (Opcional)" rows="4"></textarea>
+            <p style="font-size: 0.8em; color: #666;">Selecione uma Foto ou Vídeo (opcional):</p>
+            <input type="file" name="arquivo" accept="image/*,video/*">
+            <button type="submit">PUBLICAR NO RB BLOGS</button>
         </form>
-    </main>
+        <a href="/" class="voltar">Cancelar e Voltar</a>
+    </div>
 </body>
 </html>
