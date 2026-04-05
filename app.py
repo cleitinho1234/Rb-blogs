@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 
@@ -11,8 +11,6 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
-
-# Bancos de dados temporários
 usuarios = {} 
 postagens = [] 
 
@@ -25,35 +23,28 @@ def index():
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     if request.method == 'POST':
-        email = request.form.get('email').strip().lower() # Limpa espaços e deixa minúsculo
+        email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
         if email and email not in usuarios:
             usuarios[email] = generate_password_hash(senha)
             session['user'] = email
             return redirect(url_for('index'))
-        else:
-            return "Este e-mail já está cadastrado! <a href='/login'>Fazer Login</a>"
     return render_template('cadastro.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email_digitado = request.form.get('email').strip().lower()
-        senha_digitada = request.form.get('senha')
-        
-        # VERIFICAÇÃO RIGOROSA:
-        # 1. O e-mail existe no "banco"? 
-        # 2. A senha combina com o e-mail?
-        if email_digitado in usuarios and check_password_hash(usuarios[email_digitado], senha_digitada):
-            session['user'] = email_digitado
+        email = request.form.get('email').strip().lower()
+        senha = request.form.get('senha')
+        if email in usuarios and check_password_hash(usuarios[email], senha):
+            session['user'] = email
             return redirect(url_for('index'))
-        else:
-            return "E-mail ou senha incorretos, ou usuário não existe! <a href='/cadastro'>Crie uma conta primeiro</a>"
+        return "Erro no login! <a href='/login'>Tente de novo</a>"
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.clear() # Limpa tudo da memória do navegador
+    session.clear()
     return redirect(url_for('index'))
 
 @app.route('/postar', methods=['GET', 'POST'])
@@ -76,18 +67,21 @@ def postar():
             return redirect(url_for('index'))
     return render_template('postar.html')
 
+# NOVA LÓGICA DE CURTIR SEM RECARREGAR
 @app.route('/curtir/<id_video>')
 def curtir(id_video):
     user = session.get('user')
     if not user:
-        return redirect(url_for('login'))
+        return jsonify({"erro": "login_necessario"}), 401
+    
     for p in postagens:
         if p['id'] == id_video:
             if user not in p['likes']:
                 p['likes'].append(user)
             else:
                 p['likes'].remove(user)
-    return redirect(url_for('index'))
+            return jsonify({"novo_total": len(p['likes'])})
+    return jsonify({"erro": "nao_encontrado"}), 404
 
 @app.route('/comentar/<id_video>', methods=['POST'])
 def comentar(id_video):
