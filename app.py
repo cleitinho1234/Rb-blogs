@@ -7,6 +7,10 @@ import uuid
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
 
+# --- FUNÇÃO PARA VÍDEOS GRANDES ---
+# Define o limite máximo de upload para 100 Megabytes
+app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
+
 # Configuração de Uploads
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
@@ -16,7 +20,7 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Lista de Administradores
 ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
 
-# Bancos de dados temporários (reiniciam ao reiniciar o Render)
+# Bancos de dados temporários
 usuarios = {} # Estrutura: {email: {'senha': hash, 'nome': nome}}
 postagens = [] 
 
@@ -33,7 +37,6 @@ def cadastro():
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
         if email and email not in usuarios:
-            # Nome padrão é o início do e-mail até o usuário trocar
             usuarios[email] = {'senha': generate_password_hash(senha), 'nome': email.split('@')[0]}
             session['user'] = email
             return redirect(url_for('index'))
@@ -58,7 +61,6 @@ def salvar_nome():
     if not user_email or not novo_nome: 
         return redirect(url_for('index'))
     
-    # Validação de Nome Único
     for email, info in usuarios.items():
         if info.get('nome') == novo_nome and email != user_email:
             return "Este nome já está em uso por outro usuário! <a href='/'>Voltar</a>"
@@ -80,7 +82,6 @@ def postar():
         if filename:
             arquivo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             ext = os.path.splitext(filename)[1].lower()
-            # Identifica se é vídeo ou foto
             tipo = 'video' if ext in ['.mp4', '.webm', '.mov', '.avi'] else 'foto'
 
         postagens.insert(0, {
@@ -117,7 +118,7 @@ def comentar(id_post):
         return redirect(url_for('login'))
     
     texto = request.form.get('conteudo')
-    parent_id = request.form.get('parent_id') # Identifica se é uma resposta
+    parent_id = request.form.get('parent_id')
     nome_usuario = usuarios[user_email]['nome']
     
     novo_coment = {
@@ -130,13 +131,10 @@ def comentar(id_post):
     for p in postagens:
         if p['id'] == id_post:
             if not parent_id:
-                # Comentário principal
                 p['comentarios'].append(novo_coment)
             else:
-                # Resposta a um comentário existente
                 for c in p['comentarios']:
                     if c['id'] == parent_id:
-                        # Adiciona o @ automaticamente na resposta
                         novo_coment['texto'] = f"@{c['autor']} {texto}"
                         c['respostas'].append(novo_coment)
                         break
@@ -157,5 +155,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    # Rodar o servidor
     app.run(host='0.0.0.0', port=5000)
