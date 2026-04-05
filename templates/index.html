@@ -39,15 +39,15 @@
                     <h3>🎙️ Assistente RB (Voz)</h3>
                     <p id="status-ia">Clique no mic e fale</p>
                     <button id="btn-microfone">🎤</button>
-                    <div id="resposta-ia" style="margin-top: 15px; font-style: italic; color: #222;"></div>
-                    <div id="voce-disse" style="font-size: 0.8em; color: #666; margin-top: 10px;"></div>
+                    <div id="voce-disse" style="font-size: 0.9em; color: #555; margin-top: 10px; font-weight: bold;"></div>
+                    <div id="resposta-ia" style="margin-top: 15px; font-style: italic; color: #222; border-top: 1px solid #eee; padding-top: 10px;"></div>
                 </div>
             {% endif %}
         {% else %}
             <div class="profile-card">
                 <p>Acesse sua conta para ver as postagens:</p>
-                <a href="/login" class="btn-azul">ENTRAR</a>
-                <a href="/cadastro" class="btn-azul" style="background: #6c757d;">CADASTRAR</a>
+                <a href="/login" class="btn-azul" style="margin: 5px;">ENTRAR</a>
+                <a href="/cadastro" class="btn-azul" style="background: #6c757d; margin: 5px;">CADASTRAR</a>
             </div>
         {% endif %}
 
@@ -63,7 +63,6 @@
     </div>
 
     <script>
-        // Use sua chave atualizada do Google AI Studio aqui
         const API_KEY = 'AIzaSyDmGhd3C3J-IkjfO8CuGqbWzNm6H7LA1wY'; 
         const btnMic = document.getElementById('btn-microfone');
         const statusIa = document.getElementById('status-ia');
@@ -92,7 +91,7 @@
                 window.speechSynthesis.speak(fala);
             } catch (error) {
                 console.error(error);
-                statusIa.innerText = "Erro ao conectar. Verifique a chave API.";
+                statusIa.innerText = "Erro ao conectar com a IA.";
             }
         }
 
@@ -105,7 +104,9 @@
 
             btnMic.onclick = () => {
                 if (!gravando) {
-                    recognition.start();
+                    try {
+                        recognition.start();
+                    } catch (e) { console.log(e); }
                 } else {
                     recognition.stop();
                 }
@@ -116,7 +117,8 @@
                 btnMic.classList.add('ouvindo');
                 statusIa.innerText = "Ouvindo...";
                 respostaIa.innerText = "";
-            </div>
+                voceDisse.innerText = "";
+            };
 
             recognition.onresult = (e) => {
                 const fala = e.results[0][0].transcript;
@@ -130,10 +132,12 @@
             };
 
             recognition.onerror = (e) => {
-                statusIa.innerText = "Erro no mic: " + e.error;
+                statusIa.innerText = "Erro: " + e.error;
                 btnMic.classList.remove('ouvindo');
                 gravando = false;
             };
+        } else if (btnMic) {
+            statusIa.innerText = "Navegador sem suporte a voz.";
         }
     </script>
 </body>
