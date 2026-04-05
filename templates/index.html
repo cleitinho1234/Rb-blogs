@@ -5,158 +5,75 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Diário de Bordo Acessível</title>
     <style>
-        /* Reset básico e cores */
         * { box-sizing: border-box; }
         body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            font-family: sans-serif; 
             background-color: #f0f2f5; 
-            color: #1c1e21; 
-            margin: 0; 
-            padding: 0; 
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            margin: 0; padding: 0; 
+            display: flex; flex-direction: column; align-items: center;
         }
-
-        /* Container principal que centraliza tudo no PC */
-        .main-container {
-            width: 100%;
-            max-width: 700px; /* Largura ideal para leitura e vídeos */
-            padding: 15px;
-        }
-
-        header { 
-            background: #24292e; 
-            color: white; 
-            padding: 20px; 
-            border-radius: 0 0 15px 15px; 
-            margin-bottom: 20px;
-            width: 100%;
-            text-align: center;
-        }
+        .main-container { width: 100%; max-width: 700px; padding: 15px; }
+        header { background: #24292e; color: white; padding: 20px; text-align: center; width: 100%; border-radius: 0 0 15px 15px; }
         
-        .user-bar { 
-            background: #fff; 
-            padding: 15px; 
-            border-radius: 10px; 
-            margin-bottom: 20px; 
-            border: 1px solid #ddd; 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .user-bar a { color: #007bff; text-decoration: none; font-weight: bold; }
-
-        .btn-postar { 
-            display: block; 
-            background: #28a745; 
-            color: white; 
-            padding: 18px; 
-            text-align: center; 
-            text-decoration: none; 
-            font-weight: bold; 
-            border-radius: 10px; 
-            margin-bottom: 25px; 
-            font-size: 1.1em;
-            box-shadow: 0 4px 6px rgba(40, 167, 69, 0.2);
-        }
+        .user-bar { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ddd; display: flex; justify-content: space-between; }
+        .btn-postar { display: block; background: #28a745; color: white; padding: 15px; text-align: center; text-decoration: none; font-weight: bold; border-radius: 10px; margin-bottom: 20px; }
         
-        article { 
-            background: white; 
-            border: 1px solid #ddd; 
-            padding: 15px; 
-            margin-bottom: 25px; 
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
-        /* Ajuste do Vídeo para ser adaptável */
-        .video-container {
-            width: 100%;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            margin: 15px 0;
-            line-height: 0; /* Remove espaço extra abaixo do vídeo */
-        }
-
-        video { 
-            width: 100%; 
-            height: auto; 
-            display: block;
-        }
+        article { background: white; border: 1px solid #ddd; padding: 15px; margin-bottom: 25px; border-radius: 12px; }
         
-        .interacao { border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; }
+        .video-container { width: 100%; background: #000; border-radius: 8px; overflow: hidden; margin: 10px 0; }
+        video { width: 100%; height: auto; display: block; }
+        
         .btn-like { 
-            text-decoration: none; 
-            font-size: 20px; 
-            padding: 8px 15px; 
-            display: inline-block; 
-            background: #f0f2f5; 
-            border-radius: 20px; 
-            border: none; 
-            color: #4b4f56;
-            font-weight: bold;
+            text-decoration: none; font-size: 18px; padding: 8px 15px; 
+            background: #f0f2f5; border-radius: 20px; color: #4b4f56; font-weight: bold; display: inline-block;
         }
         
         .comentarios-lista { margin-top: 15px; padding: 0; list-style: none; }
-        .comentario-item { background: #f0f2f5; padding: 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.95em; }
+        .comentario-item { background: #f0f2f5; padding: 10px; border-radius: 10px; margin-bottom: 5px; }
         
-        .form-comentario { display: flex; gap: 10px; margin-top: 10px; }
-        .form-comentario input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; outline: none; }
-        .form-comentario button { padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 20px; font-weight: bold; }
+        .form-comentario { display: flex; gap: 5px; margin-top: 10px; }
+        .form-comentario input { flex: 1; padding: 10px; border-radius: 20px; border: 1px solid #ddd; }
+        .form-comentario button { padding: 10px; background: #007bff; color: white; border: none; border-radius: 20px; }
 
-        .btn-excluir { background-color: #ffebee; color: #dc3545; border: none; padding: 10px; text-decoration: none; font-weight: bold; border-radius: 8px; display: block; text-align: center; margin-top: 20px; }
-
-        footer { text-align: center; padding: 30px; color: #8d949e; font-size: 0.9em; }
+        .btn-excluir { background: #fff1f1; color: #dc3545; padding: 10px; text-decoration: none; display: block; text-align: center; margin-top: 15px; border-radius: 8px; font-weight: bold; }
     </style>
 </head>
 <body>
 
-    <header role="banner">
+    <header>
         <h1>Diário de Bordo</h1>
-        <p>Espaço para compartilhar o dia a dia.</p>
     </header>
 
     <div class="main-container">
-        <div class="user-bar" role="navigation">
+        <div class="user-bar">
             {% if user %}
                 <span>Olá, <strong>{{ user.split('@')[0] }}</strong></span>
                 <a href="/logout">Sair</a>
             {% else %}
-                <div style="width: 100%; text-align: center;">
-                    <a href="/login" style="margin-right: 20px;">Entrar</a>
-                    <a href="/cadastro">Criar Conta</a>
-                </div>
+                <a href="/login">Entrar</a>
+                <a href="/cadastro">Criar Conta</a>
             {% endif %}
         </div>
 
         {% if e_admin %}
-            <a href="/postar" class="btn-postar" aria-label="Botão: Criar nova postagem">➕ NOVA POSTAGEM (ADM)</a>
+            <a href="/postar" class="btn-postar">➕ NOVA POSTAGEM</a>
         {% endif %}
 
-        <main role="main">
-            {% if not posts %}
-                <p style="text-align: center; color: #65676b;">Nenhuma postagem ainda.</p>
-            {% endif %}
-
+        <main>
             {% for post in posts %}
             <article>
-                <p style="color: #65676b; font-size: 0.85em; font-weight: bold; margin-bottom: 10px;">Postado agora</p>
-                <p style="font-size: 1.05em; margin: 10px 0;">{{ post.desc }}</p>
+                <p><strong>{{ post.desc }}</strong></p>
                 
                 <div class="video-container">
-                    <video controls aria-label="Vídeo da postagem">
+                    <video controls>
                         <source src="{{ url_for('static', filename='uploads/' + post.video) }}" type="video/mp4">
-                        Seu navegador não suporta vídeos.
                     </video>
                 </div>
 
                 <div class="interacao">
                     <a href="{{ url_for('curtir', id_video=post.id) }}" class="btn-like" 
-                       aria-label="Curtir este vídeo. {{ post.likes }} curtidas">
-                       👍 {{ post.likes }}
+                       aria-label="Curtir. Total de curtidas: {{ post.likes|length }}">
+                       👍 {{ post.likes|length }}
                     </a>
 
                     <ul class="comentarios-lista">
@@ -169,26 +86,18 @@
 
                     {% if user %}
                     <form action="{{ url_for('comentar', id_video=post.id) }}" method="post" class="form-comentario">
-                        <input type="text" name="conteudo" placeholder="Comentar..." required aria-label="Escreva seu comentário">
+                        <input type="text" name="conteudo" placeholder="Comentar..." required>
                         <button type="submit">Enviar</button>
                     </form>
                     {% endif %}
                 </div>
 
                 {% if e_admin %}
-                    <a href="{{ url_for('deletar', id_video=post.id) }}" 
-                       class="btn-excluir" 
-                       onclick="return confirm('Apagar este vídeo?')">
-                       🗑️ EXCLUIR VÍDEO
-                    </a>
+                    <a href="{{ url_for('deletar', id_video=post.id) }}" class="btn-excluir" onclick="return confirm('Apagar vídeo?')">🗑️ EXCLUIR</a>
                 {% endif %}
             </article>
             {% endfor %}
         </main>
-
-        <footer>
-            <p>&copy; 2026 - Feito com carinho para o meu primo.</p>
-        </footer>
     </div>
 
 </body>
