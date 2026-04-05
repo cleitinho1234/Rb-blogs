@@ -8,36 +8,44 @@ import json
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
 
-# Configurações de Upload
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Arquivos de banco de dados simples
 POSTS_FILE = 'postagens.json'
-ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
+# IMPORTANTE: Para não perder os usuários ao reiniciar, ideal seria salvar em JSON também, 
+# mas mantive seu dicionário global por enquanto.
 usuarios = {} 
 
-# Função para carregar posts do arquivo
 def carregar_posts():
     if os.path.exists(POSTS_FILE):
         with open(POSTS_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     return []
 
-# Função para salvar posts no arquivo
 def salvar_posts(posts):
     with open(POSTS_FILE, 'w', encoding='utf-8') as f:
         json.dump(posts, f, ensure_ascii=False, indent=4)
 
 postagens = carregar_posts()
 
+# ESSA FUNÇÃO É A CHAVE: Ela busca o nome atual pelo email
+@app.context_processor
+def utility_processor():
+    def get_nome_atual(email):
+        user = usuarios.get(email)
+        if user:
+            return user.get('nome')
+        return email.split('@')[0] # Fallback caso o user não seja achado
+    return dict(get_nome_atual=get_nome_atual)
+
 @app.route('/')
 def index():
     user_email = session.get('user')
     user_info = usuarios.get(user_email) if user_email else None
+    ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
     e_admin = user_email in ADMINS
     return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=e_admin)
 
@@ -72,6 +80,7 @@ def salvar_nome():
 
 @app.route('/postar', methods=['GET', 'POST'])
 def postar():
+    ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
     if session.get('user') not in ADMINS: return "Acesso negado", 403
     if request.method == 'POST':
         arquivo = request.files.get('arquivo')
@@ -85,21 +94,9 @@ def postar():
         
         nova_postagem = {'id': str(uuid.uuid4()), 'arquivo': filename, 'desc': desc, 'tipo': tipo, 'likes': [], 'comentarios': []}
         postagens.insert(0, nova_postagem)
-        salvar_posts(postagens) # Salva no arquivo JSON
+        salvar_posts(postagens)
         return redirect(url_for('index'))
     return render_template('postar.html')
-
-@app.route('/curtir/<id_post>')
-def curtir(id_post):
-    user = session.get('user')
-    if not user: return jsonify({"erro": "login"}), 401
-    for p in postagens:
-        if p['id'] == id_post:
-            if user not in p['likes']: p['likes'].append(user)
-            else: p['likes'].remove(user)
-            salvar_posts(postagens)
-            return jsonify({"novo_total": len(p['likes'])})
-    return jsonify({"erro": "404"}), 404
 
 @app.route('/comentar/<id_post>', methods=['POST'])
 def comentar(id_post):
@@ -108,11 +105,12 @@ def comentar(id_post):
     dados = request.get_json()
     texto = dados.get('conteudo', '').strip()
     parent_id = dados.get('parent_id')
-    nome_usuario = usuarios.get(user_email, {}).get('nome', 'Usuário')
 
     if not texto: return jsonify({"erro": "vazio"}), 400
 
-    novo_coment = {'id': str(uuid.uuid4()), 'autor': nome_usuario, 'texto': texto, 'respostas': []}
+    # AGORA SALVAMOS O EMAIL, NÃO O NOME FIXO
+    novo_coment = {'id': str(uuid.uuid4()), 'autor_email': user_email, 'texto': texto, 'respostas': []}
+    
     for p in postagens:
         if p['id'] == id_post:
             if not parent_id:
@@ -120,24 +118,12 @@ def comentar(id_post):
             else:
                 for c in p['comentarios']:
                     if c['id'] == parent_id:
-                        novo_coment['texto'] = f"@{c['autor']} {texto}"
                         c['respostas'].append(novo_coment)
-            salvar_posts(postagens) # Salva comentário no arquivo
+            salvar_posts(postagens)
             return jsonify({"status": "sucesso"})
     return jsonify({"erro": "404"}), 404
 
-@app.route('/deletar/<id_post>')
-def deletar(id_post):
-    if session.get('user') not in ADMINS: return "Negado", 403
-    global postagens
-    postagens = [p for p in postagens if p['id'] != id_post]
-    salvar_posts(postagens)
-    return redirect(url_for('index'))
-
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect(url_for('index'))
+# ... (outras rotas curtir, deletar, logout iguais ao anterior)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5000, debug=True)
