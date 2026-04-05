@@ -10,8 +10,9 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Administradores com permissão total
 ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
+
+# Bancos de dados temporários
 usuarios = {} 
 postagens = [] 
 
@@ -24,27 +25,35 @@ def index():
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     if request.method == 'POST':
-        email = request.form.get('email')
+        email = request.form.get('email').strip().lower() # Limpa espaços e deixa minúsculo
         senha = request.form.get('senha')
         if email and email not in usuarios:
             usuarios[email] = generate_password_hash(senha)
             session['user'] = email
             return redirect(url_for('index'))
+        else:
+            return "Este e-mail já está cadastrado! <a href='/login'>Fazer Login</a>"
     return render_template('cadastro.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form.get('email')
-        senha = request.form.get('senha')
-        if email in usuarios and check_password_hash(usuarios[email], senha):
-            session['user'] = email
+        email_digitado = request.form.get('email').strip().lower()
+        senha_digitada = request.form.get('senha')
+        
+        # VERIFICAÇÃO RIGOROSA:
+        # 1. O e-mail existe no "banco"? 
+        # 2. A senha combina com o e-mail?
+        if email_digitado in usuarios and check_password_hash(usuarios[email_digitado], senha_digitada):
+            session['user'] = email_digitado
             return redirect(url_for('index'))
+        else:
+            return "E-mail ou senha incorretos, ou usuário não existe! <a href='/cadastro'>Crie uma conta primeiro</a>"
     return render_template('login.html')
 
 @app.route('/logout')
 def logout():
-    session.pop('user', None)
+    session.clear() # Limpa tudo da memória do navegador
     return redirect(url_for('index'))
 
 @app.route('/postar', methods=['GET', 'POST'])
@@ -57,7 +66,6 @@ def postar():
         if video:
             filename = video.filename
             video.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
-            # O campo 'likes' agora é uma lista vazia []
             postagens.insert(0, {
                 'id': filename, 
                 'video': filename, 
@@ -73,23 +81,20 @@ def curtir(id_video):
     user = session.get('user')
     if not user:
         return redirect(url_for('login'))
-    
     for p in postagens:
         if p['id'] == id_video:
-            # Se o usuário não curtiu ainda, adiciona o e-mail dele na lista
             if user not in p['likes']:
                 p['likes'].append(user)
             else:
-                # Se clicar de novo, remove (descurtir)
                 p['likes'].remove(user)
     return redirect(url_for('index'))
 
 @app.route('/comentar/<id_video>', methods=['POST'])
 def comentar(id_video):
-    if not session.get('user'):
+    user = session.get('user')
+    if not user:
         return redirect(url_for('login'))
     texto = request.form.get('conteudo')
-    user = session.get('user')
     if texto:
         for p in postagens:
             if p['id'] == id_video:
