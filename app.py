@@ -4,9 +4,14 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import json
+import requests  # Adicionado para falar com o Google
 
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
+
+# --- CONFIGURAÇÃO DA IA (ESCONDIDA) ---
+# A chave fica aqui no servidor, protegida dos robôs do Google
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "AIzaSyAZfXVKTROOsNqX1QYPcdLlrNBbaB1xW9s")
 
 # Configurações de Pastas
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
@@ -54,13 +59,31 @@ def index():
     e_admin = user_email in ADMINS
     return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=e_admin)
 
+# --- ROTA DA IA (NOVA FUNÇÃO) ---
+@app.route('/comunicar_ia', methods=['POST'])
+def comunicar_ia():
+    if not session.get('user'):
+        return jsonify({"error": "Login necessário"}), 401
+    
+    dados = request.get_json()
+    pergunta = dados.get('pergunta')
+    
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    
+    try:
+        response = requests.post(url, json={
+            "contents": [{"parts": [{"text": pergunta}]}]
+        })
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
     if request.method == 'POST':
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
         if email and email not in usuarios:
-            # Salva o novo usuário no arquivo
             usuarios[email] = {
                 'senha': generate_password_hash(senha), 
                 'nome': email.split('@')[0]
@@ -86,7 +109,7 @@ def salvar_nome():
     novo_nome = request.form.get('novo_nome', '').strip()
     if user_email and novo_nome:
         usuarios[user_email]['nome'] = novo_nome
-        salvar_dados(USERS_FILE, usuarios) # Salva a mudança de nome
+        salvar_dados(USERS_FILE, usuarios)
     return redirect(url_for('index'))
 
 @app.route('/postar', methods=['GET', 'POST'])
