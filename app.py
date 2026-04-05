@@ -8,39 +8,44 @@ import json
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
 
-# Configurações de Upload e Persistência
+# Configurações de Pastas
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Arquivos de "Banco de Dados"
 POSTS_FILE = 'postagens.json'
+USERS_FILE = 'usuarios.json'
 ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
 
-# Simulação de banco de dados de usuários (Para produção, use SQLite ou JSON)
-usuarios = {} 
+# --- FUNÇÕES DE PERSISTÊNCIA ---
 
-def carregar_posts():
-    if os.path.exists(POSTS_FILE):
-        with open(POSTS_FILE, 'r', encoding='utf-8') as f:
+def carregar_dados(arquivo):
+    if os.path.exists(arquivo):
+        with open(arquivo, 'r', encoding='utf-8') as f:
             return json.load(f)
-    return []
+    return [] if arquivo == POSTS_FILE else {}
 
-def salvar_posts(posts):
-    with open(POSTS_FILE, 'w', encoding='utf-8') as f:
-        json.dump(posts, f, ensure_ascii=False, indent=4)
+def salvar_dados(arquivo, dados):
+    with open(arquivo, 'w', encoding='utf-8') as f:
+        json.dump(dados, f, ensure_ascii=False, indent=4)
 
-postagens = carregar_posts()
+# Carrega tudo ao iniciar o site
+postagens = carregar_dados(POSTS_FILE)
+usuarios = carregar_dados(USERS_FILE)
+
+# --- UTILITÁRIOS ---
 
 @app.context_processor
 def utility_processor():
     def get_nome_atual(email):
         user = usuarios.get(email)
-        if user:
-            return user.get('nome')
-        return email.split('@')[0]
+        return user.get('nome') if user else email.split('@')[0]
     return dict(get_nome_atual=get_nome_atual)
+
+# --- ROTAS ---
 
 @app.route('/')
 def index():
@@ -55,7 +60,12 @@ def cadastro():
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
         if email and email not in usuarios:
-            usuarios[email] = {'senha': generate_password_hash(senha), 'nome': email.split('@')[0]}
+            # Salva o novo usuário no arquivo
+            usuarios[email] = {
+                'senha': generate_password_hash(senha), 
+                'nome': email.split('@')[0]
+            }
+            salvar_dados(USERS_FILE, usuarios)
             session['user'] = email
             return redirect(url_for('index'))
     return render_template('cadastro.html')
@@ -74,8 +84,9 @@ def login():
 def salvar_nome():
     user_email = session.get('user')
     novo_nome = request.form.get('novo_nome', '').strip()
-    if not user_email or not novo_nome: return redirect(url_for('index'))
-    usuarios[user_email]['nome'] = novo_nome
+    if user_email and novo_nome:
+        usuarios[user_email]['nome'] = novo_nome
+        salvar_dados(USERS_FILE, usuarios) # Salva a mudança de nome
     return redirect(url_for('index'))
 
 @app.route('/postar', methods=['GET', 'POST'])
@@ -91,9 +102,15 @@ def postar():
             ext = os.path.splitext(filename)[1].lower()
             tipo = 'video' if ext in ['.mp4', '.webm', '.mov', '.avi'] else 'foto'
         
-        nova_postagem = {'id': str(uuid.uuid4()), 'arquivo': filename, 'desc': desc, 'tipo': tipo, 'likes': [], 'comentarios': []}
-        postagens.insert(0, nova_postagem)
-        salvar_posts(postagens)
+        postagens.insert(0, {
+            'id': str(uuid.uuid4()), 
+            'arquivo': filename, 
+            'desc': desc, 
+            'tipo': tipo, 
+            'likes': [], 
+            'comentarios': []
+        })
+        salvar_dados(POSTS_FILE, postagens)
         return redirect(url_for('index'))
     return render_template('postar.html')
 
@@ -116,7 +133,7 @@ def comentar(id_post):
                 for c in p['comentarios']:
                     if c['id'] == parent_id:
                         c['respostas'].append(novo_coment)
-            salvar_posts(postagens)
+            salvar_dados(POSTS_FILE, postagens)
             return jsonify({"status": "sucesso"})
     return jsonify({"erro": "404"}), 404
 
@@ -128,7 +145,7 @@ def curtir(id_post):
         if p['id'] == id_post:
             if user not in p['likes']: p['likes'].append(user)
             else: p['likes'].remove(user)
-            salvar_posts(postagens)
+            salvar_dados(POSTS_FILE, postagens)
             return jsonify({"novo_total": len(p['likes'])})
     return jsonify({"erro": "404"}), 404
 
@@ -137,14 +154,13 @@ def deletar(id_post):
     if session.get('user') not in ADMINS: return "Negado", 403
     global postagens
     postagens = [p for p in postagens if p['id'] != id_post]
-    salvar_posts(postagens)
+    salvar_dados(POSTS_FILE, postagens)
     return redirect(url_for('index'))
 
-# ROTA DE LOGOUT QUE ESTAVA FALTANDO:
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000)
