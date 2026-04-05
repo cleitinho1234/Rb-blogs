@@ -3,21 +3,36 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 import os
 import uuid
+import json
 
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
 
-# Permite vídeos de até 100MB
+# Configurações de Upload
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
-
 UPLOAD_FOLDER = 'static/uploads'
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
+# Arquivos de banco de dados simples
+POSTS_FILE = 'postagens.json'
 ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
 usuarios = {} 
-postagens = [] 
+
+# Função para carregar posts do arquivo
+def carregar_posts():
+    if os.path.exists(POSTS_FILE):
+        with open(POSTS_FILE, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    return []
+
+# Função para salvar posts no arquivo
+def salvar_posts(posts):
+    with open(POSTS_FILE, 'w', encoding='utf-8') as f:
+        json.dump(posts, f, ensure_ascii=False, indent=4)
+
+postagens = carregar_posts()
 
 @app.route('/')
 def index():
@@ -52,9 +67,6 @@ def salvar_nome():
     user_email = session.get('user')
     novo_nome = request.form.get('novo_nome', '').strip()
     if not user_email or not novo_nome: return redirect(url_for('index'))
-    for email, info in usuarios.items():
-        if info.get('nome') == novo_nome and email != user_email:
-            return "Nome já existe! <a href='/'>Voltar</a>"
     usuarios[user_email]['nome'] = novo_nome
     return redirect(url_for('index'))
 
@@ -70,7 +82,10 @@ def postar():
             arquivo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             ext = os.path.splitext(filename)[1].lower()
             tipo = 'video' if ext in ['.mp4', '.webm', '.mov', '.avi'] else 'foto'
-        postagens.insert(0, {'id': str(uuid.uuid4()), 'arquivo': filename, 'desc': desc, 'tipo': tipo, 'likes': [], 'comentarios': []})
+        
+        nova_postagem = {'id': str(uuid.uuid4()), 'arquivo': filename, 'desc': desc, 'tipo': tipo, 'likes': [], 'comentarios': []}
+        postagens.insert(0, nova_postagem)
+        salvar_posts(postagens) # Salva no arquivo JSON
         return redirect(url_for('index'))
     return render_template('postar.html')
 
@@ -82,6 +97,7 @@ def curtir(id_post):
         if p['id'] == id_post:
             if user not in p['likes']: p['likes'].append(user)
             else: p['likes'].remove(user)
+            salvar_posts(postagens)
             return jsonify({"novo_total": len(p['likes'])})
     return jsonify({"erro": "404"}), 404
 
@@ -90,10 +106,10 @@ def comentar(id_post):
     user_email = session.get('user')
     if not user_email: return jsonify({"erro": "login"}), 401
     dados = request.get_json()
-    texto = dados.get('conteudo', '').strip() # Proteção contra texto vazio
+    texto = dados.get('conteudo', '').strip()
     parent_id = dados.get('parent_id')
-    nome_usuario = usuarios[user_email]['nome']
-    
+    nome_usuario = usuarios.get(user_email, {}).get('nome', 'Usuário')
+
     if not texto: return jsonify({"erro": "vazio"}), 400
 
     novo_coment = {'id': str(uuid.uuid4()), 'autor': nome_usuario, 'texto': texto, 'respostas': []}
@@ -101,13 +117,13 @@ def comentar(id_post):
         if p['id'] == id_post:
             if not parent_id:
                 p['comentarios'].append(novo_coment)
-                return jsonify({"status": "sucesso"})
             else:
                 for c in p['comentarios']:
                     if c['id'] == parent_id:
                         novo_coment['texto'] = f"@{c['autor']} {texto}"
                         c['respostas'].append(novo_coment)
-                        return jsonify({"status": "sucesso"})
+            salvar_posts(postagens) # Salva comentário no arquivo
+            return jsonify({"status": "sucesso"})
     return jsonify({"erro": "404"}), 404
 
 @app.route('/deletar/<id_post>')
@@ -115,6 +131,7 @@ def deletar(id_post):
     if session.get('user') not in ADMINS: return "Negado", 403
     global postagens
     postagens = [p for p in postagens if p['id'] != id_post]
+    salvar_posts(postagens)
     return redirect(url_for('index'))
 
 @app.route('/logout')
@@ -123,4 +140,4 @@ def logout():
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
