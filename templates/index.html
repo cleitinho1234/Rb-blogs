@@ -57,7 +57,8 @@
             <div style="margin-top:15px;">
                 {% for c in post.comentarios %}
                 <div style="margin-bottom:10px; border-bottom: 1px solid #f9f9f9;">
-                    <strong>{{ c.autor }}</strong>: {{ c.texto }}<br>
+                    <strong>{{ get_nome_atual(c.autor_email) }}</strong>: {{ c.texto }}<br>
+                    
                     <button onclick="toggle('f-{{ c.id }}')" style="color:blue; background:none; border:none; font-size:0.8em; cursor:pointer;">Responder</button>
                     
                     <form id="f-{{ c.id }}" onsubmit="enviarComentario(event, '{{ post.id }}', '{{ c.id }}')" class="form-resp">
@@ -66,7 +67,9 @@
                     </form>
 
                     <div id="r-{{ c.id }}" class="resp-bloco">
-                        {% for r in c.respostas %}<p><strong>{{ r.autor }}</strong>: {{ r.texto }}</p>{% endfor %}
+                        {% for r in c.respostas %}
+                        <p><strong>{{ get_nome_atual(r.autor_email) }}</strong>: {{ r.texto }}</p>
+                        {% endfor %}
                     </div>
                 </div>
                 {% endfor %}
@@ -107,7 +110,6 @@
 
             if (!conteudo) return;
 
-            // Desativa botão para o celular não bugar
             btn.disabled = true;
             btn.innerText = "...";
 
@@ -120,7 +122,7 @@
             .then(data => {
                 if (data.status === "sucesso") {
                     localStorage.setItem('scrollpos', window.scrollY);
-                    window.location.reload(true); // Força recarregar
+                    window.location.reload(true);
                 } else {
                     alert("Erro ao comentar.");
                     btn.disabled = false;
