@@ -11,13 +11,14 @@
         header { background: #24292e; color: white; padding: 20px; text-align: center; width: 100%; margin-bottom: 20px; }
         .card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
         .profile-card { background: white; padding: 25px; border-radius: 12px; border: 1px solid #ddd; margin-bottom: 20px; text-align: center; }
-        .btn-azul { background: #007bff; color: white; border: none; padding: 15px 30px; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn-azul { background: #007bff; color: white; border: none; padding: 12px 25px; border-radius: 10px; font-weight: bold; cursor: pointer; text-decoration: none; display: inline-block; }
         .btn-adm { display: block; background: #28a745; color: white; padding: 15px; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; }
-        .btn-sair { color: #d9534f; font-size: 1.1em; display: block; margin-top: 20px; font-weight: bold; text-decoration: none; border: 2px solid #d9534f; padding: 10px; border-radius: 10px; }
-        .input-nome { padding: 15px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 300px; margin-bottom: 10px; }
-        #btn-microfone { width: 80px; height: 80px; border-radius: 50%; border: none; background: #007bff; color: white; font-size: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
-        .ouvindo { background: #ff4757 !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .btn-sair { color: #d9534f; font-size: 1.1em; display: block; margin-top: 20px; font-weight: bold; text-decoration: none; border: 1px solid #d9534f; padding: 8px; border-radius: 8px; }
+        .input-nome { padding: 12px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 300px; margin-bottom: 10px; font-size: 1em; }
+        
+        /* ESTILO DO MICROFONE */
+        #btn-microfone { width: 80px; height: 80px; border-radius: 50%; border: none; background: #007bff; color: white; font-size: 30px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; }
+        .ouvindo { background: #ff4757 !important; transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 71, 87, 0.5) !important; }
     </style>
 </head>
 <body>
@@ -36,16 +37,16 @@
 
             {% if e_admin %}
                 <a href="/postar" class="btn-adm">+ NOVA POSTAGEM</a>
-                <div class="card" style="text-align: center; border: 2px solid #007bff;">
+                <div class="card" style="text-align: center; border: 2px solid #007bff; padding: 20px;">
                     <h3>🎙️ Assistente RB (Voz)</h3>
-                    <p id="status-ia">Clique e fale</p>
+                    <p id="status-ia" style="color: #666;">Clique no mic e fale</p>
                     <button id="btn-microfone">🎤</button>
-                    <div id="resposta-ia" style="margin-top: 15px; padding: 10px; font-style: italic;"></div>
+                    <div id="resposta-ia" style="margin-top: 15px; padding: 10px; font-style: italic; color: #222; line-height: 1.4;"></div>
                 </div>
             {% endif %}
         {% else %}
             <div class="profile-card">
-                <p>Acesse sua conta para interagir:</p>
+                <p>Acesse sua conta para ver as postagens:</p>
                 <a href="/login" class="btn-azul">ENTRAR</a>
                 <a href="/cadastro" class="btn-azul" style="background: #6c757d;">CADASTRAR</a>
             </div>
@@ -72,58 +73,79 @@
         async function falarComIA(pergunta) {
             statusIa.innerText = "IA pensando...";
             try {
+                // URL atualizada para v1 (mais estável)
                 const url = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+                
                 const response = await fetch(url, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ contents: [{ parts: [{ text: pergunta }] }] })
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: pergunta }] }]
+                    })
                 });
+
                 const data = await response.json();
-                const texto = data.candidates[0].content.parts[0].text;
-                respostaIa.innerText = texto;
-                statusIa.innerText = "Respondido!";
-                const fala = new SpeechSynthesisUtterance(texto);
-                fala.lang = 'pt-BR';
-                window.speechSynthesis.speak(fala);
-            } catch (e) { statusIa.innerText = "Erro na IA."; }
+
+                if (data.candidates && data.candidates[0].content.parts[0].text) {
+                    const textoResposta = data.candidates[0].content.parts[0].text;
+                    respostaIa.innerText = textoResposta;
+                    statusIa.innerText = "Respondido!";
+
+                    // Voz da IA
+                    const fala = new SpeechSynthesisUtterance(textoResposta);
+                    fala.lang = 'pt-BR';
+                    window.speechSynthesis.speak(fala);
+                } else {
+                    throw new Error("Resposta vazia");
+                }
+            } catch (error) {
+                console.error("Erro na IA:", error);
+                statusIa.innerText = "Erro ao conectar com a IA.";
+            }
         }
 
         const Reconhecimento = window.SpeechRecognition || window.webkitSpeechRecognition;
+
         if (Reconhecimento && btnMic) {
             const recognition = new Reconhecimento();
             recognition.lang = 'pt-BR';
-            recognition.continuous = false; // Importante para mobile
+            recognition.interimResults = false;
+            recognition.continuous = false;
 
             btnMic.onclick = () => {
                 if (!gravando) {
-                    recognition.start();
+                    try {
+                        recognition.start();
+                    } catch (e) { console.error(e); }
                 } else {
-                    recognition.stop(); // Força o processamento do que já foi dito
+                    recognition.stop();
                 }
             };
 
             recognition.onstart = () => {
                 gravando = true;
                 btnMic.classList.add('ouvindo');
-                statusIa.innerText = "Ouvindo...";
+                statusIa.innerText = "Ouvindo... Pode falar!";
+                respostaIa.innerText = "";
             };
 
             recognition.onresult = (e) => {
                 const fala = e.results[0][0].transcript;
-                respostaIa.innerText = "Você: " + fala;
-                falarComIA(fala);
+                if (fala.trim() !== "") {
+                    respostaIa.innerText = "Você: " + fala;
+                    falarComIA(fala);
+                }
+            };
+
+            recognition.onerror = (event) => {
+                gravando = false;
+                btnMic.classList.remove('ouvindo');
+                statusIa.innerText = "Erro: " + event.error;
             };
 
             recognition.onend = () => {
                 gravando = false;
                 btnMic.classList.remove('ouvindo');
-                if(statusIa.innerText === "Ouvindo...") statusIa.innerText = "Clique para falar";
-            };
-
-            recognition.onerror = (e) => {
-                gravando = false;
-                btnMic.classList.remove('ouvindo');
-                statusIa.innerText = "Erro: " + e.error;
             };
         }
     </script>
