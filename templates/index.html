@@ -5,76 +5,84 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RB BLOGS</title>
     <style>
+        * { box-sizing: border-box; }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; }
+        .main-container { width: 100%; max-width: 650px; padding: 15px; }
         header { background: #24292e; color: white; padding: 20px; text-align: center; width: 100%; margin-bottom: 20px; }
-        .card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 8px; margin-bottom: 20px; width: 100%; max-width: 600px; }
-        .profile-box { background: white; padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; width: 100%; max-width: 500px; text-align: center; }
-        .media img, .media video { width: 100%; border-radius: 5px; margin: 10px 0; }
-        .btn-blue { background: #007bff; color: white; border: none; border-radius: 5px; padding: 5px 15px; cursor: pointer; }
+        .card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
+        .profile-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; text-align: center; }
+        .media img, .media video { width: 100%; border-radius: 8px; margin: 10px 0; }
+        .status-bar { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 15px; color: #65676b; font-size: 0.9em; font-weight: bold; }
+        .btn-enviar { background: #007bff; color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; }
+        .btn-adm { display: block; background: #28a745; color: white; padding: 12px; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; }
+        .btn-del { color: red; text-decoration: none; font-size: 0.8em; display: block; text-align: center; margin-top: 10px; }
         .form-resp { display: none; margin-top: 5px; }
-        .resp-bloco { margin-left: 20px; border-left: 1px solid #ccc; padding-left: 10px; display: none; }
+        .resp-bloco { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; display: none; margin-top: 5px; }
     </style>
 </head>
 <body>
     <header><h1>RB BLOGS</h1></header>
-
-    {% if user %}
-    <div class="profile-box">
-        <p style="font-size: 0.9em; margin-bottom: 5px;">Seu nome no blog: <strong>{{ user_info.nome }}</strong></p>
-        <form action="/salvar_nome" method="post">
-            <input type="text" name="novo_nome" placeholder="Trocar meu nome..." required style="width: 250px; padding: 5px;">
-            <button type="submit" class="btn-blue">Salvar</button>
-        </form>
-        <a href="/logout" style="color: red; font-size: 0.7em; text-decoration: none;">Sair da conta</a>
-    </div>
-    {% if e_admin %}<div style="margin-bottom: 15px;"><a href="/postar" style="color: green; font-weight: bold; text-decoration: none;">+ NOVA POSTAGEM</a></div>{% endif %}
-    {% endif %}
-
-    {% for post in posts %}
-    <div class="card">
-        <p><strong>{{ post.desc }}</strong></p>
-        {% if post.arquivo %}
-            <div class="media">
-                {% if post.tipo == 'video' %}<video controls src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
-                {% else %}<img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}">{% endif %}
-            </div>
-        {% endif %}
-
-        <div style="font-size: 0.8em; color: #666; margin-bottom: 10px;">
-            <span id="cont-likes-{{ post.id }}">👍 {{ post.likes|length }}</span>
-        </div>
-
-        <button onclick="curtir('{{ post.id }}')" style="border: none; background: #eee; padding: 5px 10px; cursor: pointer; border-radius: 3px;">Curtir</button>
-
-        <div style="margin-top: 15px; font-size: 0.9em;">
-            {% for c in post.comentarios %}
-            <div style="margin-bottom: 8px;">
-                <strong>{{ c.autor }}</strong>: {{ c.texto }}<br>
-                <button onclick="toggle('f-{{ c.id }}')" style="color: blue; background: none; border: none; font-size: 0.8em; cursor: pointer; padding: 0;">Responder</button>
-                <button onclick="toggle('r-{{ c.id }}')" style="color: #666; background: none; border: none; font-size: 0.8em; cursor: pointer;">Ver respostas</button>
-                
-                <form id="f-{{ c.id }}" onsubmit="enviarComentario(event, '{{ post.id }}', '{{ c.id }}')" class="form-resp">
-                    <input type="text" name="conteudo" placeholder="Responder..." required style="width: 80%;">
-                    <button type="submit" style="background: none; border: 1px solid #ccc; cursor: pointer;">➤</button>
-                </form>
-
-                <div id="r-{{ c.id }}" class="resp-bloco">
-                    {% for r in c.respostas %}<p><strong>{{ r.autor }}</strong>: {{ r.texto }}</p>{% endfor %}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-
+    <div class="main-container">
         {% if user %}
-        <form onsubmit="enviarComentario(event, '{{ post.id }}')" style="margin-top: 10px;">
-            <input type="text" name="conteudo" placeholder="Comentar..." required style="width: 90%; padding: 5px;">
-            <button type="submit" style="padding: 5px 10px; cursor: pointer;">Enviar</button>
-        </form>
+            <div class="profile-card">
+                <span>Seu nome no blog: <strong>{{ user_info.nome }}</strong></span>
+                <form action="/salvar_nome" method="post" style="margin-top: 10px;">
+                    <input type="text" name="novo_nome" placeholder="Trocar meu nome..." required style="padding: 5px; border-radius: 5px; border: 1px solid #ccc;">
+                    <button type="submit" style="background:#007bff; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Salvar</button>
+                </form>
+                <a href="/logout" style="color:red; font-size: 0.8em; text-decoration:none; display:block; margin-top:10px;">Sair da conta</a>
+            </div>
+            {% if e_admin %}<a href="/postar" class="btn-adm">+ NOVA POSTAGEM</a>{% endif %}
+        {% else %}
+            <div class="profile-card"><a href="/login">Entrar</a> / <a href="/cadastro">Cadastrar</a></div>
         {% endif %}
 
-        {% if e_admin %}<div style="text-align: center; margin-top: 10px;"><a href="{{ url_for('deletar', id_post=post.id) }}" style="color: red; font-size: 0.7em; text-decoration: none;" onclick="return confirm('Excluir?')">🗑️ EXCLUIR POSTAGEM</a></div>{% endif %}
+        {% for post in posts %}
+        <div class="card">
+            <p><strong>{{ post.desc }}</strong></p>
+            {% if post.arquivo %}
+                <div class="media">
+                    {% if post.tipo == 'video' %}<video controls src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
+                    {% else %}<img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}">{% endif %}
+                </div>
+            {% endif %}
+
+            <div class="status-bar">
+                <div id="cont-likes-{{ post.id }}">👍 {{ post.likes|length }} Curtidas</div>
+                <div>💬 {{ post.comentarios|length }} Comentários</div>
+            </div>
+
+            <button onclick="curtir('{{ post.id }}', this)" style="border:none; background:#eee; border-radius:15px; padding:5px 12px; cursor:pointer;">Curtir</button>
+
+            <div style="margin-top:15px;">
+                {% for c in post.comentarios %}
+                <div style="margin-bottom:10px; border-bottom: 1px solid #f9f9f9;">
+                    <strong>{{ c.autor }}</strong>: {{ c.texto }}<br>
+                    <button onclick="toggle('f-{{ c.id }}')" style="color:blue; background:none; border:none; font-size:0.8em; cursor:pointer;">Responder</button>
+                    
+                    <form id="f-{{ c.id }}" onsubmit="enviarComentario(event, '{{ post.id }}', '{{ c.id }}')" class="form-resp">
+                        <input type="text" name="conteudo" placeholder="Responder..." required style="border-radius:15px; border:1px solid #ddd; padding:5px;">
+                        <button type="submit" class="btn-enviar">➤</button>
+                    </form>
+
+                    <div id="r-{{ c.id }}" class="resp-bloco">
+                        {% for r in c.respostas %}<p><strong>{{ r.autor }}</strong>: {{ r.texto }}</p>{% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if user %}
+            <form onsubmit="enviarComentario(event, '{{ post.id }}')" style="display:flex; gap:5px; margin-top:15px;">
+                <input type="text" name="conteudo" placeholder="Comentar..." required style="flex:1; border-radius:20px; border:1px solid #ddd; padding:10px;">
+                <button type="submit" class="btn-enviar">Enviar</button>
+            </form>
+            {% endif %}
+
+            {% if e_admin %}<a href="{{ url_for('deletar', id_post=post.id) }}" class="btn-del" onclick="return confirm('Apagar?')">🗑️ EXCLUIR POSTAGEM</a>{% endif %}
+        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 
     <script>
         function toggle(id) {
@@ -82,10 +90,10 @@
             e.style.display = (e.style.display === 'block') ? 'none' : 'block';
         }
 
-        function curtir(id) {
+        function curtir(id, btn) {
             fetch('/curtir/' + id).then(r => r.json()).then(data => {
                 if(data.novo_total !== undefined) {
-                    document.getElementById('cont-likes-'+id).innerText = '👍 ' + data.novo_total;
+                    document.getElementById('cont-likes-'+id).innerText = '👍 ' + data.novo_total + ' Curtidas';
                 }
             });
         }
@@ -94,9 +102,7 @@
             event.preventDefault();
             const form = event.target;
             const input = form.querySelector('input[name="conteudo"]');
-            const conteudo = input.value.trim();
-
-            if (!conteudo) return;
+            const conteudo = input.value;
 
             fetch('/comentar/' + idPost, {
                 method: 'POST',
@@ -109,17 +115,15 @@
                     localStorage.setItem('scrollpos', window.scrollY);
                     location.reload();
                 } else {
-                    alert("Erro ao comentar.");
+                    alert("Erro ao comentar. Verifique o login.");
                 }
             });
         }
 
         document.addEventListener("DOMContentLoaded", function() {
             var scrollpos = localStorage.getItem('scrollpos');
-            if (scrollpos) {
-                window.scrollTo(0, scrollpos);
-                localStorage.removeItem('scrollpos');
-            }
+            if (scrollpos) window.scrollTo(0, scrollpos);
+            localStorage.removeItem('scrollpos');
         });
     </script>
 </body>
