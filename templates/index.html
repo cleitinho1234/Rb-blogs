@@ -7,17 +7,16 @@
     <style>
         * { box-sizing: border-box; }
         body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 650px; padding: 15px; }
-        header { background: #24292e; color: white; padding: 20px; text-align: center; width: 100%; margin-bottom: 20px; }
+        .main-container { width: 100%; max-width: 650px; padding: 10px; }
+        header { background: #24292e; color: white; padding: 15px; text-align: center; width: 100%; }
         .card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .profile-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; text-align: center; }
-        .media img, .media video { width: 100%; border-radius: 8px; margin: 10px 0; }
-        .status-bar { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 15px; color: #65676b; font-size: 0.9em; font-weight: bold; }
-        .btn-enviar { background: #007bff; color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; }
-        .btn-adm { display: block; background: #28a745; color: white; padding: 12px; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; }
-        .btn-del { color: red; text-decoration: none; font-size: 0.8em; display: block; text-align: center; margin-top: 10px; }
+        .profile-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin: 15px 0; text-align: center; }
+        .media img, .media video { width: 100%; border-radius: 8px; margin: 10px 0; max-height: 500px; object-fit: contain; background: #000; }
+        .status-bar { display: flex; gap: 15px; padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 10px; color: #65676b; font-size: 0.9em; }
+        .btn-enviar { background: #007bff; color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; font-weight: bold; }
+        .btn-adm { display: block; background: #28a745; color: white; padding: 12px; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 15px; }
         .form-resp { display: none; margin-top: 5px; }
-        .resp-bloco { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; display: none; margin-top: 5px; }
+        .resp-bloco { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; margin-top: 5px; background: #f9f9f9; border-radius: 5px; }
     </style>
 </head>
 <body>
@@ -25,48 +24,48 @@
     <div class="main-container">
         {% if user %}
             <div class="profile-card">
-                <span>Seu nome no blog: <strong>{{ user_info.nome }}</strong></span>
-                <form action="/salvar_nome" method="post" style="margin-top: 10px;">
-                    <input type="text" name="novo_nome" placeholder="Trocar meu nome..." required style="padding: 5px; border-radius: 5px; border: 1px solid #ccc;">
-                    <button type="submit" style="background:#007bff; color:white; border:none; padding:5px 10px; border-radius:5px; cursor:pointer;">Salvar</button>
+                <span>Olá, <strong>{{ user_info.nome }}</strong></span>
+                <form action="/salvar_nome" method="post" style="margin-top: 10px; display: flex; justify-content: center; gap: 5px;">
+                    <input type="text" name="novo_nome" placeholder="Trocar nome..." required style="padding: 8px; border-radius: 5px; border: 1px solid #ccc; flex: 1; max-width: 200px;">
+                    <button type="submit" class="btn-enviar" style="border-radius: 5px;">Salvar</button>
                 </form>
-                <a href="/logout" style="color:red; font-size: 0.8em; text-decoration:none; display:block; margin-top:10px;">Sair da conta</a>
+                <a href="/logout" style="color:red; font-size: 0.8em; text-decoration:none; display:block; margin-top:10px;">Sair</a>
             </div>
             {% if e_admin %}<a href="/postar" class="btn-adm">+ NOVA POSTAGEM</a>{% endif %}
         {% else %}
-            <div class="profile-card"><a href="/login">Entrar</a> / <a href="/cadastro">Cadastrar</a></div>
+            <div class="profile-card"><a href="/login">Entrar</a> ou <a href="/cadastro">Cadastrar</a></div>
         {% endif %}
 
         {% for post in posts %}
         <div class="card">
-            <p><strong>{{ post.desc }}</strong></p>
+            <p style="font-size: 1.1em;">{{ post.desc }}</p>
             {% if post.arquivo %}
                 <div class="media">
-                    {% if post.tipo == 'video' %}<video controls src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
+                    {% if post.tipo == 'video' %}<video controls playsinline src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
                     {% else %}<img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}">{% endif %}
                 </div>
             {% endif %}
 
             <div class="status-bar">
-                <div id="cont-likes-{{ post.id }}">👍 {{ post.likes|length }} Curtidas</div>
-                <div>💬 {{ post.comentarios|length }} Comentários</div>
+                <div id="cont-likes-{{ post.id }}">👍 {{ post.likes|length }}</div>
+                <div>💬 {{ post.comentarios|length }}</div>
             </div>
 
-            <button onclick="curtir('{{ post.id }}', this)" style="border:none; background:#eee; border-radius:15px; padding:5px 12px; cursor:pointer;">Curtir</button>
+            <button onclick="curtir('{{ post.id }}')" style="border:none; background:#f0f2f5; border-radius:15px; padding:8px 20px; cursor:pointer; font-weight:bold; width: 100%;">Curtir</button>
 
-            <div style="margin-top:15px;">
+            <div style="margin-top:15px; font-size: 0.95em;">
                 {% for c in post.comentarios %}
-                <div style="margin-bottom:10px; border-bottom: 1px solid #f9f9f9;">
-                    <strong>{{ c.autor }}</strong>: {{ c.texto }}<br>
-                    <button onclick="toggle('f-{{ c.id }}')" style="color:blue; background:none; border:none; font-size:0.8em; cursor:pointer;">Responder</button>
+                <div style="margin-bottom:8px; padding: 5px; background: #f8f9fa; border-radius: 8px;">
+                    <strong>{{ c.autor }}</strong>: {{ c.texto }}
+                    <button onclick="toggle('f-{{ c.id }}')" style="color:blue; background:none; border:none; font-size:0.8em; cursor:pointer; padding: 0 10px;">Responder</button>
                     
                     <form id="f-{{ c.id }}" onsubmit="enviarComentario(event, '{{ post.id }}', '{{ c.id }}')" class="form-resp">
-                        <input type="text" name="conteudo" placeholder="Responder..." required style="border-radius:15px; border:1px solid #ddd; padding:5px;">
+                        <input type="text" name="conteudo" placeholder="Responder..." required style="border-radius:15px; border:1px solid #ddd; padding:8px; width: 70%;" autocomplete="off">
                         <button type="submit" class="btn-enviar">➤</button>
                     </form>
 
-                    <div id="r-{{ c.id }}" class="resp-bloco">
-                        {% for r in c.respostas %}<p><strong>{{ r.autor }}</strong>: {{ r.texto }}</p>{% endfor %}
+                    <div class="resp-bloco">
+                        {% for r in c.respostas %}<p style="margin: 3px 0;"><strong>{{ r.autor }}</strong>: {{ r.texto }}</p>{% endfor %}
                     </div>
                 </div>
                 {% endfor %}
@@ -74,12 +73,12 @@
 
             {% if user %}
             <form onsubmit="enviarComentario(event, '{{ post.id }}')" style="display:flex; gap:5px; margin-top:15px;">
-                <input type="text" name="conteudo" placeholder="Comentar..." required style="flex:1; border-radius:20px; border:1px solid #ddd; padding:10px;">
-                <button type="submit" class="btn-enviar">Enviar</button>
+                <input type="text" name="conteudo" placeholder="Escreva um comentário..." required style="flex:1; border-radius:20px; border:1px solid #ddd; padding:12px;" autocomplete="off">
+                <button type="submit" class="btn-enviar">Postar</button>
             </form>
             {% endif %}
 
-            {% if e_admin %}<a href="{{ url_for('deletar', id_post=post.id) }}" class="btn-del" onclick="return confirm('Apagar?')">🗑️ EXCLUIR POSTAGEM</a>{% endif %}
+            {% if e_admin %}<a href="{{ url_for('deletar', id_post=post.id) }}" style="color:red; text-decoration:none; font-size:0.7em; display:block; text-align:center; margin-top:15px;" onclick="return confirm('Excluir permanentemente?')">EXCLUIR POSTAGEM</a>{% endif %}
         </div>
         {% endfor %}
     </div>
@@ -87,13 +86,13 @@
     <script>
         function toggle(id) {
             let e = document.getElementById(id);
-            e.style.display = (e.style.display === 'block') ? 'none' : 'block';
+            e.style.display = (e.style.display === 'flex') ? 'none' : 'flex';
         }
 
-        function curtir(id, btn) {
+        function curtir(id) {
             fetch('/curtir/' + id).then(r => r.json()).then(data => {
                 if(data.novo_total !== undefined) {
-                    document.getElementById('cont-likes-'+id).innerText = '👍 ' + data.novo_total + ' Curtidas';
+                    document.getElementById('cont-likes-'+id).innerText = '👍 ' + data.novo_total;
                 }
             });
         }
@@ -102,7 +101,13 @@
             event.preventDefault();
             const form = event.target;
             const input = form.querySelector('input[name="conteudo"]');
-            const conteudo = input.value;
+            const conteudo = input.value.trim();
+            const btn = form.querySelector('button');
+
+            if (!conteudo) return;
+
+            btn.disabled = true;
+            btn.innerText = "...";
 
             fetch('/comentar/' + idPost, {
                 method: 'POST',
@@ -115,15 +120,22 @@
                     localStorage.setItem('scrollpos', window.scrollY);
                     location.reload();
                 } else {
-                    alert("Erro ao comentar. Verifique o login.");
+                    alert("Erro ao comentar.");
+                    btn.disabled = false;
+                    btn.innerText = "Postar";
                 }
+            }).catch(() => {
+                btn.disabled = false;
+                btn.innerText = "Postar";
             });
         }
 
         document.addEventListener("DOMContentLoaded", function() {
             var scrollpos = localStorage.getItem('scrollpos');
-            if (scrollpos) window.scrollTo(0, scrollpos);
-            localStorage.removeItem('scrollpos');
+            if (scrollpos) {
+                window.scrollTo(0, scrollpos);
+                localStorage.removeItem('scrollpos');
+            }
         });
     </script>
 </body>
