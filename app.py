@@ -7,6 +7,7 @@ import uuid
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
 
+# Permite vídeos de até 100MB
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
 
 UPLOAD_FOLDER = 'static/uploads'
@@ -44,7 +45,6 @@ def login():
         if email in usuarios and check_password_hash(usuarios[email]['senha'], senha):
             session['user'] = email
             return redirect(url_for('index'))
-        return "Erro no login! <a href='/login'>Tente novamente</a>"
     return render_template('login.html')
 
 @app.route('/salvar_nome', methods=['POST'])
@@ -54,7 +54,7 @@ def salvar_nome():
     if not user_email or not novo_nome: return redirect(url_for('index'))
     for email, info in usuarios.items():
         if info.get('nome') == novo_nome and email != user_email:
-            return "Este nome já está em uso! <a href='/'>Voltar</a>"
+            return "Nome já existe! <a href='/'>Voltar</a>"
     usuarios[user_email]['nome'] = novo_nome
     return redirect(url_for('index'))
 
@@ -77,7 +77,7 @@ def postar():
 @app.route('/curtir/<id_post>')
 def curtir(id_post):
     user = session.get('user')
-    if not user: return jsonify({"erro": "login_obrigatorio"}), 401
+    if not user: return jsonify({"erro": "login"}), 401
     for p in postagens:
         if p['id'] == id_post:
             if user not in p['likes']: p['likes'].append(user)
@@ -85,19 +85,15 @@ def curtir(id_post):
             return jsonify({"novo_total": len(p['likes'])})
     return jsonify({"erro": "404"}), 404
 
-# NOVA ROTA DE COMENTÁRIO (SEM REFRESH)
 @app.route('/comentar/<id_post>', methods=['POST'])
 def comentar(id_post):
     user_email = session.get('user')
     if not user_email: return jsonify({"erro": "login"}), 401
-    
     dados = request.get_json()
     texto = dados.get('conteudo')
     parent_id = dados.get('parent_id')
     nome_usuario = usuarios[user_email]['nome']
-    
     novo_coment = {'id': str(uuid.uuid4()), 'autor': nome_usuario, 'texto': texto, 'respostas': []}
-
     for p in postagens:
         if p['id'] == id_post:
             if not parent_id:
