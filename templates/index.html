@@ -10,20 +10,37 @@
         .main-container { width: 100%; max-width: 650px; padding: 15px; }
         header { background: #24292e; color: white; padding: 20px; text-align: center; width: 100%; margin-bottom: 20px; }
         .card { background: white; border: 1px solid #ddd; padding: 15px; border-radius: 12px; margin-bottom: 20px; }
-        .profile-card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #ddd; margin-bottom: 20px; text-align: center; }
+        
+        /* CAIXA DE PERFIL AMPLIADA E ACESSÍVEL */
+        .profile-card { 
+            background: white; 
+            padding: 25px; 
+            border-radius: 12px; 
+            border: 1px solid #ddd; 
+            margin-bottom: 20px; 
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
         .media img, .media video { width: 100%; border-radius: 8px; margin: 10px 0; }
         .status-bar { display: flex; gap: 20px; padding: 10px 0; border-bottom: 1px solid #eee; margin-bottom: 15px; color: #65676b; font-size: 0.9em; font-weight: bold; }
         .btn-enviar { background: #007bff; color: white; border: none; border-radius: 20px; padding: 8px 15px; cursor: pointer; }
-        .btn-adm { display: block; background: #28a745; color: white; padding: 12px; text-align: center; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 20px; min-height: 50px; line-height: 25px; }
+        
+        .btn-adm { 
+            display: block; background: #28a745; color: white; padding: 15px; 
+            text-align: center; text-decoration: none; border-radius: 8px; 
+            font-weight: bold; margin-bottom: 20px; min-height: 55px; line-height: 25px; font-size: 1.1em;
+        }
+
         .btn-del { color: red; text-decoration: none; font-size: 0.8em; display: block; text-align: center; margin-top: 10px; }
         .form-resp { display: none; margin-top: 5px; }
         .resp-bloco { margin-left: 20px; border-left: 2px solid #ddd; padding-left: 10px; display: none; margin-top: 5px; }
 
-        /* NOVOS ESTILOS DE ACESSIBILIDADE */
+        /* ESTILOS DE ACESSIBILIDADE */
         .btn-acessivel {
             display: inline-block;
             min-width: 160px;
-            min-height: 55px; /* Tamanho grande para facilitar o toque */
+            min-height: 55px;
             line-height: 55px;
             background: #007bff;
             color: white;
@@ -36,7 +53,21 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .btn-acessivel:focus {
-            outline: 5px solid #ffc107; /* Borda amarela forte para o TalkBack */
+            outline: 5px solid #ffc107;
+        }
+
+        /* Botão Sair Estilizado */
+        .btn-sair {
+            color: #d9534f; 
+            font-size: 1.2em; 
+            display: block; 
+            margin-top: 20px; 
+            font-weight: bold; 
+            padding: 15px; 
+            border: 2px solid #d9534f; 
+            border-radius: 10px; 
+            text-decoration: none;
+            background: #fff;
         }
     </style>
 </head>
@@ -44,18 +75,32 @@
     <header><h1>RB BLOGS</h1></header>
     <div class="main-container">
         {% if user %}
-            <div class="profile-card" role="region" aria-label="Perfil do usuário">
-                <span>Seu nome: <strong>{{ user_info.nome }}</strong></span>
-                <form action="/salvar_nome" method="post" style="margin-top: 10px;">
-                    <input type="text" name="novo_nome" aria-label="Digite o novo nome para trocar" placeholder="Trocar nome..." required style="padding: 10px; border-radius: 5px; border: 1px solid #ccc; min-height: 44px;">
-                    <button type="submit" aria-label="Confirmar alteração de nome" style="background:#007bff; color:white; border:none; padding:10px 20px; border-radius:5px; min-height: 48px;">Salvar</button>
+            <div class="profile-card" role="region" aria-label="Informações do seu perfil">
+                <p style="font-size: 1.4em; margin-bottom: 15px;">Seu nome atual: <strong>{{ user_info.nome }}</strong></p>
+                
+                <form action="/salvar_nome" method="post" style="margin-top: 15px; display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                    <input type="text" name="novo_nome" 
+                           aria-label="Digite um novo nome para trocar seu apelido no site" 
+                           placeholder="Novo nome..." 
+                           required 
+                           style="padding: 15px; border-radius: 8px; border: 2px solid #ccc; width: 100%; max-width: 300px; min-height: 50px; font-size: 1.1em;">
+                    
+                    <button type="submit" 
+                            aria-label="Salvar alteração de nome" 
+                            style="background:#007bff; color:white; border:none; padding:15px 30px; border-radius:10px; font-weight: bold; font-size: 1.1em; min-height: 50px; cursor: pointer;">
+                        SALVAR NOME
+                    </button>
                 </form>
-                <a href="/logout" aria-label="Sair da conta" style="color:red; font-size: 1.1em; display:block; margin-top:15px; font-weight: bold; padding: 10px;">SAIR DA CONTA</a>
+
+                <a href="/logout" class="btn-sair" aria-label="Sair da sua conta">SAIR DA CONTA</a>
             </div>
-            {% if e_admin %}<a href="/postar" class="btn-adm" aria-label="Criar nova postagem">+ NOVA POSTAGEM</a>{% endif %}
+            
+            {% if e_admin %}
+                <a href="/postar" class="btn-adm" aria-label="Criar nova postagem">+ NOVA POSTAGEM</a>
+            {% endif %}
         {% else %}
             <div class="profile-card" role="navigation" aria-label="Menu de entrada">
-                <p style="font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Bem-vindo! Escolha uma opção:</p>
+                <p style="font-size: 1.3em; margin-bottom: 20px; font-weight: bold;">Bem-vindo! Escolha uma opção:</p>
                 <a href="/login" class="btn-acessivel" aria-label="Botão para Entrar na sua conta">ENTRAR</a>
                 <a href="/cadastro" class="btn-acessivel" style="background: #6c757d; border-color: #545b62;" aria-label="Botão para Criar uma conta nova">CADASTRAR</a>
             </div>
@@ -63,11 +108,14 @@
 
         {% for post in posts %}
         <div class="card" role="article">
-            <p><strong>{{ post.desc }}</strong></p>
+            <p style="font-size: 1.1em;"><strong>{{ post.desc }}</strong></p>
             {% if post.arquivo %}
                 <div class="media">
-                    {% if post.tipo == 'video' %}<video controls playsinline src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
-                    {% else %}<img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}" alt="Imagem da postagem">{% endif %}
+                    {% if post.tipo == 'video' %}
+                        <video controls playsinline src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
+                    {% else %}
+                        <img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}" alt="Imagem da postagem">
+                    {% endif %}
                 </div>
             {% endif %}
 
@@ -76,17 +124,17 @@
                 <div>💬 {{ post.comentarios|length }} Comentários</div>
             </div>
 
-            <button onclick="curtir('{{ post.id }}', this)" aria-label="Curtir esta postagem" style="border:none; background:#eee; border-radius:15px; padding:10px 20px; cursor:pointer; min-height: 48px;">Curtir</button>
+            <button onclick="curtir('{{ post.id }}', this)" aria-label="Curtir esta postagem" style="border:none; background:#eee; border-radius:15px; padding:12px 25px; cursor:pointer; min-height: 48px; font-weight: bold;">Curtir</button>
 
             <div style="margin-top:15px;">
                 {% for c in post.comentarios %}
-                <div style="margin-bottom:10px; border-bottom: 1px solid #f9f9f9;">
+                <div style="margin-bottom:10px; border-bottom: 1px solid #f9f9f9; padding-bottom: 5px;">
                     <strong>{{ get_nome_atual(c.autor_email) }}</strong>: {{ c.texto }}<br>
                     
-                    <button onclick="toggle('f-{{ c.id }}')" aria-label="Responder comentário de {{ get_nome_atual(c.autor_email) }}" style="color:blue; background:none; border:none; font-size:0.9em; cursor:pointer; padding: 10px 0;">Responder</button>
+                    <button onclick="toggle('f-{{ c.id }}')" aria-label="Responder comentário de {{ get_nome_atual(c.autor_email) }}" style="color:blue; background:none; border:none; font-size:1em; cursor:pointer; padding: 10px 0;">Responder</button>
                     
                     <form id="f-{{ c.id }}" onsubmit="enviarComentario(event, '{{ post.id }}', '{{ c.id }}')" class="form-resp">
-                        <input type="text" name="conteudo" aria-label="Escreva sua resposta" placeholder="Responder..." required style="border-radius:15px; border:1px solid #ddd; padding:8px; min-height: 44px;">
+                        <input type="text" name="conteudo" aria-label="Escreva sua resposta" placeholder="Responder..." required style="border-radius:15px; border:1px solid #ddd; padding:10px; min-height: 44px; width: 80%;">
                         <button type="submit" class="btn-enviar" aria-label="Enviar resposta">➤</button>
                     </form>
 
@@ -100,13 +148,15 @@
             </div>
 
             {% if user %}
-            <form onsubmit="enviarComentario(event, '{{ post.id }}')" style="display:flex; gap:5px; margin-top:15px;">
-                <input type="text" name="conteudo" aria-label="Escreva um comentário" placeholder="Comentar..." required style="flex:1; border-radius:20px; border:1px solid #ddd; padding:12px; min-height: 48px;">
-                <button type="submit" class="btn-enviar" style="min-width: 80px;">Enviar</button>
+            <form onsubmit="enviarComentario(event, '{{ post.id }}')" style="display:flex; gap:10px; margin-top:15px;">
+                <input type="text" name="conteudo" aria-label="Escreva um comentário para esta postagem" placeholder="Comentar..." required style="flex:1; border-radius:20px; border:1px solid #ddd; padding:15px; min-height: 50px; font-size: 1em;">
+                <button type="submit" class="btn-enviar" style="min-width: 90px; font-weight: bold;">Enviar</button>
             </form>
             {% endif %}
 
-            {% if e_admin %}<a href="{{ url_for('deletar', id_post=post.id) }}" class="btn-del" onclick="return confirm('Apagar?')">🗑️ EXCLUIR POSTAGEM</a>{% endif %}
+            {% if e_admin %}
+                <a href="{{ url_for('deletar', id_post=post.id) }}" class="btn-del" onclick="return confirm('Apagar?')">🗑️ EXCLUIR POSTAGEM</a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
