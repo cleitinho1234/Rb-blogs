@@ -4,14 +4,9 @@ from werkzeug.utils import secure_filename
 import os
 import uuid
 import json
-import requests  # Necessário para a ponte com o Google
 
 app = Flask(__name__)
 app.secret_key = 'chave_super_secreta_do_cleitinho'
-
-# --- CONFIGURAÇÃO DA IA (SEGURA) ---
-# O sistema busca a chave que você colocou no painel 'Environment' do Render
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 
 # Configurações de Pastas
 app.config['MAX_CONTENT_LENGTH'] = 100 * 1024 * 1024 
@@ -57,34 +52,6 @@ def index():
     user_info = usuarios.get(user_email) if user_email else None
     e_admin = user_email in ADMINS
     return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=e_admin)
-
-# --- ROTA DA IA (CORRIGIDA) ---
-@app.route('/comunicar_ia', methods=['POST'])
-def comunicar_ia():
-    # Verifica se o usuário está logado
-    if not session.get('user'):
-        return jsonify({"error": "Login necessário"}), 401
-    
-    dados = request.get_json()
-    pergunta = dados.get('pergunta')
-
-    if not GEMINI_API_KEY:
-        return jsonify({"error": "Configuração da chave API ausente no Render"}), 500
-    
-    # Usa a chave salva no Render para falar com o Google
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    
-    try:
-        # Faz a requisição para o Google com um tempo limite de 10 segundos
-        response = requests.post(url, json={
-            "contents": [{"parts": [{"text": pergunta}]}]
-        }, timeout=10)
-        
-        # Retorna a resposta do Google direto para o seu site
-        return jsonify(response.json())
-    except Exception as e:
-        print(f"Erro na comunicação com a IA: {e}")
-        return jsonify({"error": "O servidor da IA demorou a responder ou falhou."}), 500
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
@@ -145,55 +112,11 @@ def postar():
         return redirect(url_for('index'))
     return render_template('postar.html')
 
-@app.route('/comentar/<id_post>', methods=['POST'])
-def comentar(id_post):
-    user_email = session.get('user')
-    if not user_email: return jsonify({"erro": "login"}), 401
-    dados = request.get_json()
-    texto = dados.get('conteudo', '').strip()
-    parent_id = dados.get('parent_id')
-
-    if not texto: return jsonify({"erro": "vazio"}), 400
-
-    novo_coment = {'id': str(uuid.uuid4()), 'autor_email': user_email, 'texto': texto, 'respostas': []}
-    for p in postagens:
-        if p['id'] == id_post:
-            if not parent_id:
-                p['comentarios'].append(novo_coment)
-            else:
-                for c in p['comentarios']:
-                    if c['id'] == parent_id:
-                        c['respostas'].append(novo_coment)
-            salvar_dados(POSTS_FILE, postagens)
-            return jsonify({"status": "sucesso"})
-    return jsonify({"erro": "404"}), 404
-
-@app.route('/curtir/<id_post>')
-def curtir(id_post):
-    user = session.get('user')
-    if not user: return jsonify({"erro": "login"}), 401
-    for p in postagens:
-        if p['id'] == id_post:
-            if user not in p['likes']: p['likes'].append(user)
-            else: p['likes'].remove(user)
-            salvar_dados(POSTS_FILE, postagens)
-            return jsonify({"novo_total": len(p['likes'])})
-    return jsonify({"erro": "404"}), 404
-
-@app.route('/deletar/<id_post>')
-def deletar(id_post):
-    if session.get('user') not in ADMINS: return "Negado", 403
-    global postagens
-    postagens = [p for p in postagens if p['id'] != id_post]
-    salvar_dados(POSTS_FILE, postagens)
-    return redirect(url_for('index'))
-
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
 if __name__ == "__main__":
-    # Ajuste para rodar corretamente no Render
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
