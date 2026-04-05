@@ -13,15 +13,14 @@ if not os.path.exists(UPLOAD_FOLDER):
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 ADMINS = ['robertdcg1999@gmail.com', 'cleitinhodacruzsilva4@gmail.com']
-usuarios = {} # Estrutura: {email: {'senha': hash, 'nome': nome}}
+usuarios = {} # {email: {'senha': hash, 'nome': nome}}
 postagens = [] 
 
 @app.route('/')
 def index():
     user_email = session.get('user')
     user_info = usuarios.get(user_email) if user_email else None
-    e_admin = user_email in ADMINS
-    return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=e_admin)
+    return render_template('index.html', posts=postagens, user=user_email, user_info=user_info, e_admin=(user_email in ADMINS))
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
@@ -34,21 +33,6 @@ def cadastro():
             return redirect(url_for('index'))
     return render_template('cadastro.html')
 
-@app.route('/salvar_nome', methods=['POST'])
-def salvar_nome():
-    user_email = session.get('user')
-    novo_nome = request.form.get('novo_nome').strip()
-    if not user_email or not novo_nome:
-        return redirect(url_for('index'))
-    
-    # Verifica se o nome já existe para outra pessoa
-    for email, info in usuarios.items():
-        if info.get('nome') == novo_nome and email != user_email:
-            return "Este nome já está em uso! <a href='/'>Voltar</a>"
-    
-    usuarios[user_email]['nome'] = novo_nome
-    return redirect(url_for('index'))
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -59,52 +43,43 @@ def login():
             return redirect(url_for('index'))
     return render_template('login.html')
 
+@app.route('/salvar_nome', methods=['POST'])
+def salvar_nome():
+    user_email = session.get('user')
+    novo_nome = request.form.get('novo_nome', '').strip()
+    if not user_email or not novo_nome: return redirect(url_for('index'))
+    
+    for email, info in usuarios.items():
+        if info.get('nome') == novo_nome and email != user_email:
+            return "Este nome já existe! <a href='/'>Voltar</a>"
+    
+    usuarios[user_email]['nome'] = novo_nome
+    return redirect(url_for('index'))
+
 @app.route('/postar', methods=['GET', 'POST'])
 def postar():
-    if session.get('user') not in ADMINS: return "Negado", 403
+    if session.get('user') not in ADMINS: return "Acesso negado", 403
     if request.method == 'POST':
         arquivo = request.files.get('arquivo')
         desc = request.form.get('descricao')
-        filename = secure_filename(arquivo.filename) if arquivo else None
-        if filename: arquivo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        filename = secure_filename(arquivo.filename) if arquivo and arquivo.filename != '' else None
         
+        tipo = 'texto'
+        if filename:
+            arquivo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            ext = os.path.splitext(filename)[1].lower()
+            tipo = 'video' if ext in ['.mp4', '.webm'] else 'foto'
+
         postagens.insert(0, {
             'id': str(uuid.uuid4()), 
             'arquivo': filename, 
             'desc': desc, 
-            'tipo': 'video' if filename and filename.endswith('.mp4') else 'foto' if filename else 'texto',
+            'tipo': tipo,
             'likes': [], 
             'comentarios': []
         })
         return redirect(url_for('index'))
     return render_template('postar.html')
-
-@app.route('/comentar/<id_post>', methods=['POST'])
-def comentar(id_post):
-    user_email = session.get('user')
-    if not user_email: return redirect(url_for('login'))
-    
-    texto = request.form.get('conteudo')
-    parent_id = request.form.get('parent_id') # Se for uma resposta
-    nome_usuario = usuarios[user_email]['nome']
-    
-    comentario_novo = {
-        'id': str(uuid.uuid4()),
-        'autor': nome_usuario,
-        'texto': texto,
-        'respostas': []
-    }
-
-    for p in postagens:
-        if p['id'] == id_post:
-            if not parent_id:
-                p['comentarios'].append(comentario_novo)
-            else:
-                for c in p['comentarios']:
-                    if c['id'] == parent_id:
-                        comentario_novo['texto'] = f"@{c['autor']} {texto}"
-                        c['respostas'].append(comentario_novo)
-    return redirect(url_for('index'))
 
 @app.route('/curtir/<id_post>')
 def curtir(id_post):
@@ -116,6 +91,35 @@ def curtir(id_post):
             else: p['likes'].remove(user)
             return jsonify({"novo_total": len(p['likes'])})
     return jsonify({"erro": "404"}), 404
+
+@app.route('/comentar/<id_post>', methods=['POST'])
+def comentar(id_post):
+    user_email = session.get('user')
+    if not user_email: return redirect(url_for('login'))
+    
+    texto = request.form.get('conteudo')
+    parent_id = request.form.get('parent_id')
+    nome_usuario = usuarios[user_email]['nome']
+    
+    novo_coment = {'id': str(uuid.uuid4()), 'autor': nome_usuario, 'texto': texto, 'respostas': []}
+
+    for p in postagens:
+        if p['id'] == id_post:
+            if not parent_id:
+                p['comentarios'].append(novo_coment)
+            else:
+                for c in p['comentarios']:
+                    if c['id'] == parent_id:
+                        novo_coment['texto'] = f"@{c['autor']} {texto}"
+                        c['respostas'].append(novo_coment)
+    return redirect(url_for('index'))
+
+@app.route('/deletar/<id_post>')
+def deletar(id_post):
+    if session.get('user') not in ADMINS: return "Negado", 403
+    global postagens
+    postagens = [p for p in postagens if p['id'] != id_post]
+    return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():
