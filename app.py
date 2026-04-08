@@ -6,43 +6,56 @@ import json
 app = Flask(__name__)
 app.secret_key = 'chave_mestre_do_negocio'
 
+# Caminho do arquivo de usuários
 USERS_FILE = 'usuarios.json'
-# Coloque seu email aqui para o site saber que VOCÊ é o dono
-ADMIN_EMAIL = 'cleitinhodacruzsilva4@gmail.com' 
+
+# SEU EMAIL DE ADMIN (Corrigido sem espaços invisíveis)
+ADMIN_EMAIL = 'cleitinhodacruzsilva4@gmail.com'
 
 def carregar_usuarios():
     if os.path.exists(USERS_FILE):
         with open(USERS_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
+            try:
+                return json.load(f)
+            except:
+                return {}
     return {}
 
 def salvar_usuarios(dados):
     with open(USERS_FILE, 'w', encoding='utf-8') as f:
         json.dump(dados, f, ensure_ascii=False, indent=4)
 
-usuarios = carregar_usuarios()
-
 @app.route('/')
 def index():
+    usuarios = carregar_usuarios()
     user_email = session.get('user')
+    
     if not user_email:
         return redirect(url_for('login'))
     
     user_info = usuarios.get(user_email)
+    # Verifica se você é o dono do site
     e_admin = (user_email == ADMIN_EMAIL)
     
-    # Se não for admin e não tiver acesso liberado, vai para o pagamento
+    # Se não for admin e não tiver pago, mostra tela de pagamento
     if not e_admin and not user_info.get('acesso'):
         return render_template('pagamento.html')
     
-    # Se for admin, carrega a lista de usuários para gerenciar
-    lista_usuarios = usuarios if e_admin else None
+    # Se for admin, envia a lista completa para o HTML
+    lista_para_exibir = usuarios if e_admin else None
     
-    return render_template('index.html', user=user_email, info=user_info, e_admin=e_admin, lista_usuarios=lista_usuarios)
+    return render_template('index.html', 
+                           user=user_email, 
+                           user_info=user_info, 
+                           e_admin=e_admin, 
+                           lista_usuarios=lista_para_exibir)
 
 @app.route('/liberar/<email>')
 def liberar_acesso(email):
-    if session.get('user') != ADMIN_EMAIL: return "Proibido", 403
+    usuarios = carregar_usuarios()
+    if session.get('user') != ADMIN_EMAIL:
+        return "Acesso Negado", 403
+    
     if email in usuarios:
         usuarios[email]['acesso'] = True
         salvar_usuarios(usuarios)
@@ -50,21 +63,26 @@ def liberar_acesso(email):
 
 @app.route('/remover/<email>')
 def remover_usuario(email):
-    if session.get('user') != ADMIN_EMAIL: return "Proibido", 403
+    usuarios = carregar_usuarios()
+    if session.get('user') != ADMIN_EMAIL:
+        return "Acesso Negado", 403
+    
     if email in usuarios:
-        usuarios[email]['acesso'] = False # Apenas remove o acesso, ou del usuarios[email] para apagar
+        usuarios[email]['acesso'] = False 
         salvar_usuarios(usuarios)
     return redirect(url_for('index'))
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
+    usuarios = carregar_usuarios()
     if request.method == 'POST':
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
+        
         if email and email not in usuarios:
             usuarios[email] = {
                 'senha': generate_password_hash(senha),
-                'senha_limpa': senha, # Para você ver a senha no painel como pediu
+                'senha_limpa': senha,
                 'acesso': False
             }
             salvar_usuarios(usuarios)
@@ -74,9 +92,11 @@ def cadastro():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    usuarios = carregar_usuarios()
     if request.method == 'POST':
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
+        
         if email in usuarios and check_password_hash(usuarios[email]['senha'], senha):
             session['user'] = email
             return redirect(url_for('index'))
