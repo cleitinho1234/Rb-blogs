@@ -34,14 +34,16 @@ def index():
     e_admin = (user_email == ADMIN_EMAIL)
     
     if not e_admin and not user_info.get('acesso'):
-        return render_template('pagamento.html')
+        return redirect(url_for('pagamento'))
     
-    # Envia a lista completa para o admin
     return render_template('index.html', 
                            user=user_email, 
-                           user_info=user_info, 
                            e_admin=e_admin, 
-                           lista_usuarios=usuarios if e_admin else None)
+                           lista_usuarios=usuarios) # Enviando a lista completa sempre
+
+@app.route('/pagamento')
+def pagamento():
+    return render_template('pagamento.html')
 
 @app.route('/pedir_ativacao')
 def pedir_ativacao():
@@ -67,14 +69,15 @@ def remover_usuario(email):
     usuarios = carregar_usuarios()
     if session.get('user') != ADMIN_EMAIL: return "Proibido", 403
     if email in usuarios:
-        usuarios[email]['acesso'] = False
+        usuarios[email].pop('acesso', None) # Reseta o acesso
+        usuarios[email]['pediu_liberacao'] = False
         salvar_usuarios(usuarios)
     return redirect(url_for('index'))
 
 @app.route('/cadastro', methods=['GET', 'POST'])
 def cadastro():
-    usuarios = carregar_usuarios()
     if request.method == 'POST':
+        usuarios = carregar_usuarios()
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
         if email and email not in usuarios:
@@ -91,8 +94,8 @@ def cadastro():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    usuarios = carregar_usuarios()
     if request.method == 'POST':
+        usuarios = carregar_usuarios()
         email = request.form.get('email').strip().lower()
         senha = request.form.get('senha')
         if email in usuarios and check_password_hash(usuarios[email]['senha'], senha):
