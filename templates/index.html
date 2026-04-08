@@ -1,156 +1,37 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RB BLOGS</title>
-    <style>
-        * { box-sizing: border-box; }
-        body { font-family: sans-serif; background: #f0f2f5; margin: 0; display: flex; flex-direction: column; align-items: center; }
-        .main-container { width: 100%; max-width: 650px; padding: 15px; padding-bottom: 80px; } /* Espaço para o link fixo */
-        header { background: #24292e; color: white; padding: 25px; text-align: center; width: 100%; margin-bottom: 20px; }
-        
-        /* Estilo dos Cards */
-        .card { background: white; border: 1px solid #ddd; padding: 20px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .profile-card { background: white; padding: 30px; border-radius: 15px; border: 1px solid #ddd; margin-bottom: 25px; text-align: center; }
-        
-        /* Botões Maiores para Acessibilidade */
-        .btn-azul { background: #007bff; color: white; border: none; padding: 18px 30px; border-radius: 12px; font-weight: bold; font-size: 1.1em; cursor: pointer; text-decoration: none; display: inline-block; min-width: 44px; min-height: 44px; }
-        .btn-adm { display: block; background: #28a745; color: white; padding: 20px; text-align: center; text-decoration: none; border-radius: 12px; font-weight: bold; font-size: 1.2em; margin-bottom: 25px; }
-        
-        /* Interação (Curtir e Comentar) - Botões Grandes */
-        .interacao { border-top: 2px solid #f0f2f5; margin-top: 15px; padding-top: 15px; display: flex; justify-content: space-around; }
-        .btn-interagir { background: #f0f2f5; border: none; color: #444; font-weight: bold; cursor: pointer; padding: 15px; border-radius: 10px; flex: 1; margin: 0 5px; font-size: 1.1em; transition: 0.2s; }
-        .btn-interagir:hover { background: #e4e6e9; }
-        .btn-interagir.curtido { color: #007bff; background: #e7f3ff; }
-
-        /* Comentários */
-        .comentarios-section { margin-top: 15px; background: #f8f9fa; padding: 15px; border-radius: 12px; }
-        .input-comentario { width: 100%; padding: 15px; border-radius: 25px; border: 2px solid #ddd; margin-top: 10px; font-size: 1em; outline: none; }
-
-        /* Link Flutuante do WhatsApp */
-        .link-contato { position: fixed; bottom: 20px; right: 20px; background: #25d366; color: white; padding: 15px 20px; border-radius: 50px; text-decoration: none; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2); z-index: 1000; font-size: 1em; display: flex; align-items: center; gap: 8px; }
-        .link-contato:hover { transform: scale(1.05); background: #128c7e; }
-    </style>
-</head>
-<body>
-
-    <header><h1>RB BLOGS</h1></header>
-
-    <div class="main-container">
-        
-        {% if user %}
-            <div class="profile-card">
-                <p style="font-size: 1.2em;">Olá, <strong>{{ user_info.nome }}</strong></p>
-                <form action="/salvar_nome" method="post" style="display: flex; flex-direction: column; gap: 10px; align-items: center;">
-                    <input type="text" name="novo_nome" class="input-nome" placeholder="Novo nome..." required aria-label="Alterar seu nome">
-                    <button type="submit" class="btn-azul">SALVAR NOME</button>
-                </form>
-                <a href="/logout" class="btn-sair" style="display: inline-block; margin-top: 20px; color: #d9534f; text-decoration: none; font-weight: bold;">SAIR DA CONTA</a>
-            </div>
-
-            {% if e_admin %}
-                <a href="/postar" class="btn-adm" aria-label="Criar nova postagem">+ NOVA POSTAGEM</a>
-            {% endif %}
-        {% else %}
-            <div class="profile-card">
-                <p>Acesse sua conta para ver as postagens:</p>
-                <a href="/login" class="btn-azul" style="margin: 5px;">ENTRAR</a>
-                <a href="/cadastro" class="btn-azul" style="background: #6c757d; margin: 5px;">CADASTRAR</a>
-            </div>
-        {% endif %}
-
-        {% for post in posts %}
-        <div class="card" id="post-{{ post.id }}">
-            <p style="font-size: 1.1em; line-height: 1.4;"><strong>{{ post.desc }}</strong></p>
-            {% if post.arquivo %}
-                {% if post.tipo == 'video' %}
-                    <video controls playsinline style="width:100%; border-radius:12px;" src="{{ url_for('static', filename='uploads/' + post.arquivo) }}"></video>
-                {% else %}
-                    <img src="{{ url_for('static', filename='uploads/' + post.arquivo) }}" alt="Imagem da postagem" style="width:100%; border-radius:12px;">
+{% if e_admin %}
+    <div class="card">
+        <h2>Painel de Controle (Vendas)</h2>
+        <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background: #eee;">
+                    <th style="padding: 10px;">Email</th>
+                    <th>Senha</th>
+                    <th>Status</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for email, dados in lista_usuarios.items() %}
+                {% if email != user %}
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 10px;">{{ email }}</td>
+                    <td>{{ dados.senha_limpa }}</td>
+                    <td>{{ "✅ Ativo" if dados.acesso else "❌ Pendente" }}</td>
+                    <td>
+                        <a href="/liberar/{{ email }}" class="btn-azul" style="background: green; padding: 5px 10px;">Liberar</a>
+                        <a href="/remover/{{ email }}" class="btn-azul" style="background: red; padding: 5px 10px;">Remover</a>
+                    </td>
+                </tr>
                 {% endif %}
-            {% endif %}
-
-            <div class="interacao">
-                <button class="btn-interagir {% if user in post.likes %}curtido{% endif %}" 
-                        onclick="curtirPost('{{ post.id }}')" 
-                        aria-label="Curtir postagem">
-                    👍 <span id="total-likes-{{ post.id }}">{{ post.likes|length }}</span>
-                </button>
-                <button class="btn-interagir" 
-                        onclick="focarComentario('{{ post.id }}')" 
-                        aria-label="Comentar na postagem">
-                    💬 Comentar
-                </button>
-                {% if e_admin %}
-                    <a href="/deletar/{{ post.id }}" style="color: #d9534f; text-decoration: none; padding: 10px;" onclick="return confirm('Deletar post?')">🗑️</a>
-                {% endif %}
-            </div>
-
-            <div class="comentarios-section">
-                <div id="lista-comentarios-{{ post.id }}">
-                    {% for coment in post.comentarios %}
-                        <div style="border-bottom: 1px solid #ddd; padding: 8px 0;">
-                            <p style="margin: 0;"><strong>{{ get_nome_atual(coment.autor_email) }}:</strong> {{ coment.texto }}</p>
-                        </div>
-                    {% endfor %}
-                </div>
-                {% if user %}
-                    <input type="text" class="input-comentario" id="input-{{ post.id }}" 
-                           placeholder="Escreva um comentário e aperte Enter..." 
-                           onkeypress="enviarComentario(event, '{{ post.id }}')"
-                           aria-label="Escreva seu comentário">
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
-
-    <a href="https://w.app/fp02po" target="_blank" class="link-contato" aria-label="Falar no WhatsApp para fazer seu blog">
-        📱 Venha fazer seu blog!
-    </a>
-
-    <script>
-        async function curtirPost(postId) {
-            const res = await fetch(`/curtir/${postId}`);
-            const data = await res.json();
-            if (data.novo_total !== undefined) {
-                document.getElementById(`total-likes-${postId}`).innerText = data.novo_total;
-                // Alterna a cor do botão visualmente
-                const btn = document.querySelector(`#post-${postId} .btn-interagir`);
-                btn.classList.toggle('curtido');
-            }
-        }
-
-        function focarComentario(postId) {
-            const input = document.getElementById(`input-${postId}`);
-            if (input) {
-                input.focus();
-                input.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }
-        }
-
-        async function enviarComentario(event, postId) {
-            if (event.key === 'Enter') {
-                const texto = event.target.value.trim();
-                if (texto !== "") {
-                    const res = await fetch(`/comentar/${postId}`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ conteudo: texto })
-                    });
-
-                    if (res.ok) {
-                        const lista = document.getElementById(`lista-comentarios-${postId}`);
-                        const novo = document.createElement('div');
-                        novo.style = "border-bottom: 1px solid #ddd; padding: 8px 0;";
-                        novo.innerHTML = `<p style="margin: 0;"><strong>Você:</strong> ${texto}</p>`;
-                        lista.appendChild(novo);
-                        event.target.value = '';
-                    }
-                }
-            }
-        }
-    </script>
-</body>
-</html>
+{% else %}
+    <div class="card">
+        <h2>Seus Mods Liberados</h2>
+        <p>Aproveite seus downloads abaixo:</p>
+        <a href="LINK_DO_MOD_1" class="btn-azul">Baixar Mod 1</a>
+        <a href="LINK_DO_MOD_2" class="btn-azul">Baixar Mod 2</a>
+    </div>
+{% endif %}
