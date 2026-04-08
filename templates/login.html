@@ -2,26 +2,90 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Blog Acessível</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - ELITE MODS HUB</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; font-size: 16px; }
-        button { width: 100%; padding: 15px; background: #24292e; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        /* Fundo escuro total para dar foco ao painel */
+        body { font-family: sans-serif; background: #0f0f0f; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        
+        .login-card { 
+            background: #1a1a1a; 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7); 
+            width: 100%; 
+            max-width: 360px; 
+            text-align: center; 
+            border: 1px solid #333; 
+        }
+        
+        /* O novo nome com a cor verde de destaque */
+        h1 { color: #25d366; margin-bottom: 10px; font-size: 1.8em; letter-spacing: 1px; }
+        p { color: #888; margin-bottom: 35px; font-size: 0.95em; }
+
+        .input-group { margin-bottom: 25px; text-align: left; }
+        label { display: block; margin-bottom: 10px; color: #ccc; font-weight: bold; font-size: 0.9em; }
+        
+        input { 
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 12px; 
+            border: 1px solid #333; 
+            background: #252525; 
+            color: white; 
+            font-size: 1em; 
+            outline: none; 
+            box-sizing: border-box; 
+        }
+        
+        input:focus { border-color: #25d366; background: #2a2a2a; }
+
+        /* Botão grande e fácil de clicar para acessibilidade */
+        .btn-entrar { 
+            width: 100%; 
+            background: #25d366; 
+            color: black; 
+            border: none; 
+            padding: 18px; 
+            border-radius: 12px; 
+            font-weight: bold; 
+            font-size: 1.1em; 
+            cursor: pointer; 
+            margin-top: 10px; 
+            transition: 0.3s;
+        }
+        
+        .btn-entrar:hover { background: #1eb956; transform: scale(1.02); }
+
+        .links { margin-top: 30px; font-size: 0.9em; border-top: 1px solid #333; padding-top: 20px; }
+        .links a { color: #25d366; text-decoration: none; font-weight: bold; }
     </style>
 </head>
 <body>
-    <main>
-        <h1>Entrar no Blog</h1>
-        <form action="/login" method="post">
-            <label for="email">E-mail:</label>
-            <input type="email" id="email" name="email" required aria-label="Digite seu e-mail">
-            
-            <label for="senha">Senha:</label>
-            <input type="password" id="senha" name="senha" required aria-label="Digite sua senha">
-            
-            <button type="submit">ENTRAR</button>
-        </form>
-        <p><a href="/cadastro">Não tem conta? Crie uma aqui.</a></p>
-    </main>
+
+<div class="login-card">
+    <h1>ELITE MODS HUB</h1>
+    <p>Área de Acesso Exclusiva</p>
+
+    <form action="/login" method="post">
+        <div class="input-group">
+            <label for="email">E-mail de Usuário</label>
+            <input type="email" id="email" name="email" required placeholder="Digite seu e-mail">
+        </div>
+
+        <div class="input-group">
+            <label for="senha">Senha Secreta</label>
+            <input type="password" id="senha" name="senha" required placeholder="Digite sua senha">
+        </div>
+
+        <button type="submit" class="btn-entrar">ENTRAR NO SISTEMA</button>
+    </form>
+
+    <div class="links">
+        Não tem uma conta liberada? <br><br>
+        <a href="/cadastro">CRIAR MEU CADASTRO</a>
+    </div>
+</div>
+
 </body>
 </html>
